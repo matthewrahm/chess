@@ -60,7 +60,7 @@ public class ChessPiece {
             case BISHOP -> getBishopMoves(board, myPosition);
             case KNIGHT -> getKnightMoves(board, myPosition);
             case ROOK -> getRookMoves(board, myPosition);
-            case PAWN -> new ArrayList<>(); // TODO: implement later
+            case PAWN -> getPawnMoves(board, myPosition)
         };
     }
 
@@ -129,6 +129,65 @@ public class ChessPiece {
         }
 
         return moves;
+    }
+
+    private Collection<ChessMove> getPawnMoves(ChessBoard board, ChessPosition myPosition) {
+        Collection<ChessMove> moves = new ArrayList<>();
+        int row = myPosition.getRow();
+        int col = myPosition.getColumn();
+
+        // Direction depends on color: white moves up (+1), black moves down (-1)
+        int direction = (pieceColor == ChessGame.TeamColor.WHITE) ? 1 : -1;
+        int startRow = (pieceColor == ChessGame.TeamColor.WHITE) ? 2 : 7;
+        int promotionRow = (pieceColor == ChessGame.TeamColor.WHITE) ? 8 : 1;
+
+        int newRow = row + direction;
+
+        // Forward move (1 square)
+        if (newRow >= 1 && newRow <= 8) {
+            ChessPosition oneAhead = new ChessPosition(newRow, col);
+            if (board.getPiece(oneAhead) == null) {
+                addPawnMove(myPosition, oneAhead, newRow == promotionRow, moves);
+
+                // Double move from starting position
+                if (row == startRow) {
+                    int twoAheadRow = row + (2 * direction);
+                    ChessPosition twoAhead = new ChessPosition(twoAheadRow, col);
+                    if (board.getPiece(twoAhead) == null) {
+                        moves.add(new ChessMove(myPosition, twoAhead, null));
+                    }
+                }
+            }
+        }
+
+        // Diagonal captures
+        int[] captureCols = {col - 1, col + 1};
+        for (int captureCol : captureCols) {
+            if (captureCol >= 1 && captureCol <= 8 && newRow >= 1 && newRow <= 8) {
+                ChessPosition capturePos = new ChessPosition(newRow, captureCol);
+                ChessPiece pieceAtTarget = board.getPiece(capturePos);
+                if (pieceAtTarget != null && pieceAtTarget.getTeamColor() != this.pieceColor) {
+                    addPawnMove(myPosition, capturePos, newRow == promotionRow, moves);
+                }
+            }
+        }
+
+        return moves;
+    }
+
+    /**
+     * Helper to add pawn moves, handling promotion
+     */
+    private void addPawnMove(ChessPosition from, ChessPosition to, boolean isPromotion, Collection<ChessMove> moves) {
+        if (isPromotion) {
+            // Must promote to one of these pieces
+            moves.add(new ChessMove(from, to, PieceType.QUEEN));
+            moves.add(new ChessMove(from, to, PieceType.ROOK));
+            moves.add(new ChessMove(from, to, PieceType.BISHOP));
+            moves.add(new ChessMove(from, to, PieceType.KNIGHT));
+        } else {
+            moves.add(new ChessMove(from, to, null));
+        }
     }
 
     /**
