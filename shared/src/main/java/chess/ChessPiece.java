@@ -56,10 +56,10 @@ public class ChessPiece {
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         return switch (type) {
             case KING -> getKingMoves(board, myPosition);
-            case QUEEN -> new ArrayList<>(); // TODO: implement later
+            case QUEEN -> getQueenMoves(board, myPosition);
             case BISHOP -> getBishopMoves(board, myPosition);
-            case KNIGHT -> new ArrayList<>(); // TODO: implement later
-            case ROOK -> getRookMoves(board, myPosition)
+            case KNIGHT -> getKnightMoves(board, myPosition);
+            case ROOK -> getRookMoves(board, myPosition);
             case PAWN -> new ArrayList<>(); // TODO: implement later
         };
     }
@@ -97,6 +97,37 @@ public class ChessPiece {
         // Bishop moves diagonally
         int[][] directions = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
         addSlidingMoves(board, myPosition, directions, moves);
+        return moves;
+    }
+
+    private Collection<ChessMove> getQueenMoves(ChessBoard board, ChessPosition myPosition) {
+        Collection<ChessMove> moves = new ArrayList<>();
+        // Queen moves like rook + bishop (all 8 directions)
+        int[][] directions = {
+            {1, 0}, {-1, 0}, {0, 1}, {0, -1},  // orthogonal (rook)
+            {1, 1}, {1, -1}, {-1, 1}, {-1, -1} // diagonal (bishop)
+        };
+        addSlidingMoves(board, myPosition, directions, moves);
+        return moves;
+    }
+
+    private Collection<ChessMove> getKnightMoves(ChessBoard board, ChessPosition myPosition) {
+        Collection<ChessMove> moves = new ArrayList<>();
+        int row = myPosition.getRow();
+        int col = myPosition.getColumn();
+
+        // Knight moves in L-shape: 2 squares one direction, 1 square perpendicular
+        int[][] jumps = {
+            {2, 1}, {2, -1}, {-2, 1}, {-2, -1},
+            {1, 2}, {1, -2}, {-1, 2}, {-1, -2}
+        };
+
+        for (int[] jump : jumps) {
+            int newRow = row + jump[0];
+            int newCol = col + jump[1];
+            addMoveIfValid(board, myPosition, newRow, newCol, moves);
+        }
+
         return moves;
     }
 
