@@ -60,7 +60,7 @@ public class ChessPiece {
             case BISHOP -> getBishopMoves(board, myPosition);
             case KNIGHT -> getKnightMoves(board, myPosition);
             case ROOK -> getRookMoves(board, myPosition);
-            case PAWN -> getPawnMoves(board, myPosition)
+            case PAWN -> getPawnMoves(board, myPosition);
         };
     }
 
