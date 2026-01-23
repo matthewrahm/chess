@@ -1,5 +1,7 @@
 package chess;
 
+import java.util.Arrays;
+
 /**
  * A chessboard that can hold and rearrange chess pieces.
  * <p>
@@ -40,5 +42,50 @@ public class ChessBoard {
      */
     public void resetBoard() {
         throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChessBoard that = (ChessBoard) o;
+        return Arrays.deepEquals(squares, that.squares);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.deepHashCode(squares);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (int row = 8; row >= 1; row--) {
+            sb.append(row).append(" |");
+            for (int col = 1; col <= 8; col++) {
+                ChessPiece piece = getPiece(new ChessPosition(row, col));
+                if (piece == null) {
+                    sb.append(" ");
+                } else {
+                    sb.append(pieceToChar(piece));
+                }
+                sb.append("|");
+            }
+            sb.append("\n");
+        }
+        sb.append("   a b c d e f g h");
+        return sb.toString();
+    }
+
+    private char pieceToChar(ChessPiece piece) {
+        char c = switch (piece.getPieceType()) {
+            case KING -> 'k';
+            case QUEEN -> 'q';
+            case BISHOP -> 'b';
+            case KNIGHT -> 'n';
+            case ROOK -> 'r';
+            case PAWN -> 'p';
+        };
+        return piece.getTeamColor() == ChessGame.TeamColor.WHITE ? Character.toUpperCase(c) : c;
     }
 }
