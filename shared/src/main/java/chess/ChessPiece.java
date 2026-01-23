@@ -57,9 +57,9 @@ public class ChessPiece {
         return switch (type) {
             case KING -> getKingMoves(board, myPosition);
             case QUEEN -> new ArrayList<>(); // TODO: implement later
-            case BISHOP -> new ArrayList<>(); // TODO: implement later
+            case BISHOP -> getBishopMoves(board, myPosition);
             case KNIGHT -> new ArrayList<>(); // TODO: implement later
-            case ROOK -> new ArrayList<>(); // TODO: implement later
+            case ROOK -> getRookMoves(board, myPosition)
             case PAWN -> new ArrayList<>(); // TODO: implement later
         };
     }
@@ -82,6 +82,55 @@ public class ChessPiece {
         }
 
         return moves;
+    }
+
+    private Collection<ChessMove> getRookMoves(ChessBoard board, ChessPosition myPosition) {
+        Collection<ChessMove> moves = new ArrayList<>();
+        // Rook moves horizontally and vertically
+        int[][] directions = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        addSlidingMoves(board, myPosition, directions, moves);
+        return moves;
+    }
+
+    private Collection<ChessMove> getBishopMoves(ChessBoard board, ChessPosition myPosition) {
+        Collection<ChessMove> moves = new ArrayList<>();
+        // Bishop moves diagonally
+        int[][] directions = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+        addSlidingMoves(board, myPosition, directions, moves);
+        return moves;
+    }
+
+    /**
+     * Helper for sliding pieces (rook, bishop, queen) - moves in a direction until blocked
+     */
+    private void addSlidingMoves(ChessBoard board, ChessPosition from, int[][] directions, Collection<ChessMove> moves) {
+        int row = from.getRow();
+        int col = from.getColumn();
+
+        for (int[] dir : directions) {
+            int newRow = row + dir[0];
+            int newCol = col + dir[1];
+
+            while (newRow >= 1 && newRow <= 8 && newCol >= 1 && newCol <= 8) {
+                ChessPosition to = new ChessPosition(newRow, newCol);
+                ChessPiece pieceAtTarget = board.getPiece(to);
+
+                if (pieceAtTarget == null) {
+                    // Empty square - can move here and continue
+                    moves.add(new ChessMove(from, to, null));
+                } else if (pieceAtTarget.getTeamColor() != this.pieceColor) {
+                    // Enemy piece - can capture but must stop
+                    moves.add(new ChessMove(from, to, null));
+                    break;
+                } else {
+                    // Friendly piece - blocked, stop
+                    break;
+                }
+
+                newRow += dir[0];
+                newCol += dir[1];
+            }
+        }
     }
 
     /**
