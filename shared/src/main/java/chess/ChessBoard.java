@@ -73,6 +73,16 @@ public class ChessBoard {
         }
     }
 
+    public ChessBoard copy() {
+        ChessBoard clone = new ChessBoard();
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                clone.squares[row][col] = this.squares[row][col];
+            }
+        }
+        return clone;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
