@@ -12,10 +12,12 @@ import java.util.UUID;
 public class UserService {
     private final UserDAO userDAO;
     private final AuthDAO authDAO;
+    private final AuthHelper authHelper;
 
-    public UserService(UserDAO userDAO, AuthDAO authDAO) {
+    public UserService(UserDAO userDAO, AuthDAO authDAO, AuthHelper authHelper) {
         this.userDAO = userDAO;
         this.authDAO = authDAO;
+        this.authHelper = authHelper;
     }
 
     public AuthData register(String username, String password, String email) throws ServiceException, DataAccessException {
@@ -58,9 +60,7 @@ public class UserService {
     }
 
     public void logout(String authToken) throws ServiceException, DataAccessException {
-        if (authToken == null || authDAO.getAuth(authToken) == null) {
-            throw new ServiceException(401, "Error: unauthorized");
-        }
+        authHelper.validateAuth(authToken);
         authDAO.deleteAuth(authToken);
     }
 }

@@ -1,7 +1,6 @@
 package service;
 
 import chess.ChessGame;
-import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
 import dataaccess.MemoryGameDAO;
 import model.AuthData;
@@ -11,20 +10,20 @@ import java.util.Collection;
 
 public class GameService {
     private final MemoryGameDAO gameDAO;
-    private final AuthDAO authDAO;
+    private final AuthHelper authHelper;
 
-    public GameService(MemoryGameDAO gameDAO, AuthDAO authDAO) {
+    public GameService(MemoryGameDAO gameDAO, AuthHelper authHelper) {
         this.gameDAO = gameDAO;
-        this.authDAO = authDAO;
+        this.authHelper = authHelper;
     }
 
     public Collection<GameData> listGames(String authToken) throws ServiceException, DataAccessException {
-        validateAuth(authToken);
+        authHelper.validateAuth(authToken);
         return gameDAO.listGames();
     }
 
     public int createGame(String authToken, String gameName) throws ServiceException, DataAccessException {
-        validateAuth(authToken);
+        authHelper.validateAuth(authToken);
 
         if (gameName == null || gameName.isEmpty()) {
             throw new ServiceException(400, "Error: bad request");
@@ -37,7 +36,7 @@ public class GameService {
     }
 
     public void joinGame(String authToken, String playerColor, Integer gameID) throws ServiceException, DataAccessException {
-        AuthData auth = validateAuth(authToken);
+        AuthData auth = authHelper.validateAuth(authToken);
 
         if (playerColor == null || playerColor.isEmpty() ||
                 (!playerColor.equals("WHITE") && !playerColor.equals("BLACK"))) {
@@ -66,16 +65,5 @@ public class GameService {
             }
             gameDAO.updateGame(new GameData(game.gameID(), game.whiteUsername(), username, game.gameName(), game.game()));
         }
-    }
-
-    private AuthData validateAuth(String authToken) throws ServiceException, DataAccessException {
-        if (authToken == null) {
-            throw new ServiceException(401, "Error: unauthorized");
-        }
-        AuthData auth = authDAO.getAuth(authToken);
-        if (auth == null) {
-            throw new ServiceException(401, "Error: unauthorized");
-        }
-        return auth;
     }
 }

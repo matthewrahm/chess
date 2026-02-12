@@ -9,6 +9,7 @@ import handler.GameHandler;
 import handler.SessionHandler;
 import handler.UserHandler;
 import io.javalin.Javalin;
+import service.AuthHelper;
 import service.ClearService;
 import service.GameService;
 import service.ServiceException;
@@ -23,8 +24,9 @@ public class Server {
         MemoryAuthDAO authDAO = new MemoryAuthDAO();
         MemoryGameDAO gameDAO = new MemoryGameDAO();
 
-        UserService userService = new UserService(userDAO, authDAO);
-        GameService gameService = new GameService(gameDAO, authDAO);
+        AuthHelper authHelper = new AuthHelper(authDAO);
+        UserService userService = new UserService(userDAO, authDAO, authHelper);
+        GameService gameService = new GameService(gameDAO, authHelper);
         ClearService clearService = new ClearService(userDAO, authDAO, gameDAO);
 
         UserHandler userHandler = new UserHandler(userService);
