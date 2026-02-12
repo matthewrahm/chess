@@ -5,6 +5,7 @@ import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
 import dataaccess.UserDAO;
 
+/** Service that clears all data from the application. */
 public class ClearService {
     private final UserDAO userDAO;
     private final AuthDAO authDAO;

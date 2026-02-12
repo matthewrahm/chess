@@ -8,6 +8,7 @@ import model.GameData;
 
 import java.util.Collection;
 
+/** Service handling game creation, listing, and join operations. */
 public class GameService {
     private final MemoryGameDAO gameDAO;
     private final AuthHelper authHelper;

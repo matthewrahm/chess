@@ -4,6 +4,7 @@ import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
 import model.AuthData;
 
+/** Shared helper for validating authentication tokens across services. */
 public class AuthHelper {
     private final AuthDAO authDAO;
 

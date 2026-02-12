@@ -4,6 +4,7 @@ import model.GameData;
 
 import java.util.Collection;
 
+/** Data access interface for chess game storage operations. */
 public interface GameDAO {
     void clear() throws DataAccessException;
     void createGame(GameData game) throws DataAccessException;

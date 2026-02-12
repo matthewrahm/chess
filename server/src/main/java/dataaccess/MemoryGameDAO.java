@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+/** In-memory implementation of {@link GameDAO} using a HashMap with auto-incrementing game IDs. */
 public class MemoryGameDAO implements GameDAO {
     private final Map<Integer, GameData> games = new HashMap<>();
     private int nextId = 1;

@@ -2,6 +2,7 @@ package handler;
 
 import com.google.gson.Gson;
 
+/** Centralized JSON serialization and deserialization utility using Gson. */
 public class JsonUtil {
     private static final Gson GSON = new Gson();
 

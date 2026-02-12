@@ -6,6 +6,7 @@ import request.LoginRequest;
 import result.AuthResult;
 import service.UserService;
 
+/** HTTP handler for session management (POST /session, DELETE /session). */
 public class SessionHandler {
     private final UserService userService;
 

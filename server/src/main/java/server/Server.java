@@ -15,6 +15,7 @@ import service.GameService;
 import service.ServiceException;
 import service.UserService;
 
+/** Chess server application that configures and runs the Javalin HTTP server. */
 public class Server {
 
     private final Javalin javalin;

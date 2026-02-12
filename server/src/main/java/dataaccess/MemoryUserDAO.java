@@ -5,6 +5,7 @@ import model.UserData;
 import java.util.HashMap;
 import java.util.Map;
 
+/** In-memory implementation of {@link UserDAO} using a HashMap. */
 public class MemoryUserDAO implements UserDAO {
     private final Map<String, UserData> users = new HashMap<>();
 

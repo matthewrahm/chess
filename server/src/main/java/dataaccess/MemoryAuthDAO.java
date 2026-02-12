@@ -5,6 +5,7 @@ import model.AuthData;
 import java.util.HashMap;
 import java.util.Map;
 
+/** In-memory implementation of {@link AuthDAO} using a HashMap. */
 public class MemoryAuthDAO implements AuthDAO {
     private final Map<String, AuthData> auths = new HashMap<>();
 

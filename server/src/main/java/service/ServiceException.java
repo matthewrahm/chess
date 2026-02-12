@@ -1,5 +1,6 @@
 package service;
 
+/** Exception thrown by service methods, carrying an HTTP status code. */
 public class ServiceException extends Exception {
     private final int statusCode;
 

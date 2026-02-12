@@ -6,6 +6,7 @@ import request.RegisterRequest;
 import result.AuthResult;
 import service.UserService;
 
+/** HTTP handler for user registration (POST /user). */
 public class UserHandler {
     private final UserService userService;
 

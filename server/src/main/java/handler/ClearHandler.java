@@ -3,6 +3,7 @@ package handler;
 import io.javalin.http.Context;
 import service.ClearService;
 
+/** HTTP handler for clearing all application data (DELETE /db). */
 public class ClearHandler {
     private final ClearService clearService;
 

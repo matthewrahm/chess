@@ -1,5 +1,6 @@
 package server;
 
+/** Entry point for the chess server application. */
 public class ServerMain {
     public static void main(String[] args) {
         Server server = new Server();

@@ -9,6 +9,7 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.UUID;
 
+/** Service handling user registration, login, and logout operations. */
 public class UserService {
     private final UserDAO userDAO;
     private final AuthDAO authDAO;

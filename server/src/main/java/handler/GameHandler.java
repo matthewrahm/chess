@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/** HTTP handler for game operations (GET /game, POST /game, PUT /game). */
 public class GameHandler {
     private final GameService gameService;
 
