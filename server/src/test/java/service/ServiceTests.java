@@ -43,4 +43,28 @@ public class ServiceTests {
         assertNotNull(auth.authToken());
         assertEquals("testUser", auth.username());
     }
+
+    @Test
+    void registerDuplicateUser() throws Exception {
+        userService.register("testUser", "testPass", "test@mail.com");
+        ServiceException ex = assertThrows(ServiceException.class, () ->
+                userService.register("testUser", "testPass", "test@mail.com"));
+        assertEquals(403, ex.getStatusCode());
+    }
+
+    @Test
+    void loginSuccess() throws Exception {
+        userService.register("testUser", "testPass", "test@mail.com");
+        AuthData auth = userService.login("testUser", "testPass");
+        assertNotNull(auth.authToken());
+        assertEquals("testUser", auth.username());
+    }
+
+    @Test
+    void loginWrongPassword() throws Exception {
+        userService.register("testUser", "testPass", "test@mail.com");
+        ServiceException ex = assertThrows(ServiceException.class, () ->
+                userService.login("testUser", "wrongPass"));
+        assertEquals(401, ex.getStatusCode());
+    }
 }
