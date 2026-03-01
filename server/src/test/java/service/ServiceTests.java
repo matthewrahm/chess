@@ -67,4 +67,17 @@ public class ServiceTests {
                 userService.login("testUser", "wrongPass"));
         assertEquals(401, ex.getStatusCode());
     }
+
+    @Test
+    void logoutSuccess() throws Exception {
+        AuthData auth = userService.register("testUser", "testPass", "test@mail.com");
+        assertDoesNotThrow(() -> userService.logout(auth.authToken()));
+    }
+
+    @Test
+    void logoutInvalidToken() {
+        ServiceException ex = assertThrows(ServiceException.class, () ->
+                userService.logout("badToken"));
+        assertEquals(401, ex.getStatusCode());
+    }
 }
