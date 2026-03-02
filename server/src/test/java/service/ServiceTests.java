@@ -96,4 +96,18 @@ public class ServiceTests {
                 gameService.listGames("badToken"));
         assertEquals(401, ex.getStatusCode());
     }
+
+    @Test
+    void createGameSuccess() throws Exception {
+        AuthData auth = userService.register("testUser", "testPass", "test@mail.com");
+        int gameID = gameService.createGame(auth.authToken(), "My Game");
+        assertTrue(gameID > 0);
+    }
+
+    @Test
+    void createGameUnauthorized() {
+        ServiceException ex = assertThrows(ServiceException.class, () ->
+                gameService.createGame("badToken", "My Game"));
+        assertEquals(401, ex.getStatusCode());
+    }
 }
