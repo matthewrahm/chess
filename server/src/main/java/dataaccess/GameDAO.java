@@ -7,6 +7,7 @@ import java.util.Collection;
 /** Data access interface for chess game storage operations. */
 public interface GameDAO {
     void clear() throws DataAccessException;
+    int generateId() throws DataAccessException;
     void createGame(GameData game) throws DataAccessException;
     GameData getGame(int gameID) throws DataAccessException;
     Collection<GameData> listGames() throws DataAccessException;

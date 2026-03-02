@@ -22,6 +22,7 @@ public class MemoryGameDAO implements GameDAO {
         games.put(game.gameID(), game);
     }
 
+    @Override
     public int generateId() {
         return nextId++;
     }

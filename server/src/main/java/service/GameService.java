@@ -2,7 +2,7 @@ package service;
 
 import chess.ChessGame;
 import dataaccess.DataAccessException;
-import dataaccess.MemoryGameDAO;
+import dataaccess.GameDAO;
 import model.AuthData;
 import model.GameData;
 
@@ -10,10 +10,10 @@ import java.util.Collection;
 
 /** Service handling game creation, listing, and join operations. */
 public class GameService {
-    private final MemoryGameDAO gameDAO;
+    private final GameDAO gameDAO;
     private final AuthHelper authHelper;
 
-    public GameService(MemoryGameDAO gameDAO, AuthHelper authHelper) {
+    public GameService(GameDAO gameDAO, AuthHelper authHelper) {
         this.gameDAO = gameDAO;
         this.authHelper = authHelper;
     }
