@@ -80,4 +80,20 @@ public class ServiceTests {
                 userService.logout("badToken"));
         assertEquals(401, ex.getStatusCode());
     }
+
+    @Test
+    void listGamesSuccess() throws Exception {
+        AuthData auth = userService.register("testUser", "testPass", "test@mail.com");
+        gameService.createGame(auth.authToken(), "Game 1");
+        gameService.createGame(auth.authToken(), "Game 2");
+        var games = gameService.listGames(auth.authToken());
+        assertEquals(2, games.size());
+    }
+
+    @Test
+    void listGamesUnauthorized() {
+        ServiceException ex = assertThrows(ServiceException.class, () ->
+                gameService.listGames("badToken"));
+        assertEquals(401, ex.getStatusCode());
+    }
 }
