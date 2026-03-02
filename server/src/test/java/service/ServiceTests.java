@@ -1,8 +1,11 @@
 package service;
 
+import dataaccess.AuthDAO;
+import dataaccess.GameDAO;
 import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryGameDAO;
 import dataaccess.MemoryUserDAO;
+import dataaccess.UserDAO;
 import model.AuthData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,10 +13,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ServiceTests {
-    private MemoryUserDAO userDAO;
-    private MemoryAuthDAO authDAO;
-    private MemoryGameDAO gameDAO;
-    private AuthHelper authHelper;
+    private UserDAO userDAO;
+    private AuthDAO authDAO;
+    private GameDAO gameDAO;
     private UserService userService;
     private GameService gameService;
     private ClearService clearService;
@@ -23,7 +25,7 @@ public class ServiceTests {
         userDAO = new MemoryUserDAO();
         authDAO = new MemoryAuthDAO();
         gameDAO = new MemoryGameDAO();
-        authHelper = new AuthHelper(authDAO);
+        AuthHelper authHelper = new AuthHelper(authDAO);
         userService = new UserService(userDAO, authDAO, authHelper);
         gameService = new GameService(gameDAO, authHelper);
         clearService = new ClearService(userDAO, authDAO, gameDAO);
