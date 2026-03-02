@@ -110,4 +110,22 @@ public class ServiceTests {
                 gameService.createGame("badToken", "My Game"));
         assertEquals(401, ex.getStatusCode());
     }
+
+    @Test
+    void joinGameSuccess() throws Exception {
+        AuthData auth = userService.register("testUser", "testPass", "test@mail.com");
+        int gameID = gameService.createGame(auth.authToken(), "My Game");
+        assertDoesNotThrow(() -> gameService.joinGame(auth.authToken(), "WHITE", gameID));
+    }
+
+    @Test
+    void joinGameAlreadyTaken() throws Exception {
+        AuthData auth1 = userService.register("user1", "pass1", "e1@mail.com");
+        AuthData auth2 = userService.register("user2", "pass2", "e2@mail.com");
+        int gameID = gameService.createGame(auth1.authToken(), "My Game");
+        gameService.joinGame(auth1.authToken(), "WHITE", gameID);
+        ServiceException ex = assertThrows(ServiceException.class, () ->
+                gameService.joinGame(auth2.authToken(), "WHITE", gameID));
+        assertEquals(403, ex.getStatusCode());
+    }
 }
