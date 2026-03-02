@@ -1,14 +1,15 @@
 package server;
 
-import com.google.gson.JsonObject;
 import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryGameDAO;
 import dataaccess.MemoryUserDAO;
 import handler.ClearHandler;
 import handler.GameHandler;
+import handler.JsonUtil;
 import handler.SessionHandler;
 import handler.UserHandler;
 import io.javalin.Javalin;
+import io.javalin.http.Context;
 import service.AuthHelper;
 import service.ClearService;
 import service.GameService;
@@ -45,21 +46,18 @@ public class Server {
         javalin.post("/game", gameHandler::createGame);
         javalin.put("/game", gameHandler::joinGame);
 
-        javalin.exception(ServiceException.class, (e, ctx) -> {
-            ctx.status(e.getStatusCode());
-            ctx.contentType("application/json");
-            JsonObject error = new JsonObject();
-            error.addProperty("message", e.getMessage());
-            ctx.result(error.toString());
-        });
+        javalin.exception(ServiceException.class, (e, ctx) ->
+                sendError(ctx, e.getStatusCode(), e.getMessage()));
 
-        javalin.exception(Exception.class, (e, ctx) -> {
-            ctx.status(500);
-            ctx.contentType("application/json");
-            JsonObject error = new JsonObject();
-            error.addProperty("message", "Error: " + e.getMessage());
-            ctx.result(error.toString());
-        });
+        javalin.exception(Exception.class, (e, ctx) ->
+                sendError(ctx, 500, "Error: " + e.getMessage()));
+    }
+
+    private void sendError(Context ctx, int status, String message) {
+        ctx.status(status);
+        ctx.contentType("application/json");
+        record ErrorResponse(String message) { }
+        ctx.result(JsonUtil.toJson(new ErrorResponse(message)));
     }
 
     public int run(int desiredPort) {
