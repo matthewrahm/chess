@@ -1,8 +1,11 @@
 package server;
 
+import dataaccess.AuthDAO;
+import dataaccess.GameDAO;
 import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryGameDAO;
 import dataaccess.MemoryUserDAO;
+import dataaccess.UserDAO;
 import handler.ClearHandler;
 import handler.GameHandler;
 import handler.JsonUtil;
@@ -22,9 +25,9 @@ public class Server {
     private final Javalin javalin;
 
     public Server() {
-        MemoryUserDAO userDAO = new MemoryUserDAO();
-        MemoryAuthDAO authDAO = new MemoryAuthDAO();
-        MemoryGameDAO gameDAO = new MemoryGameDAO();
+        UserDAO userDAO = new MemoryUserDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameDAO gameDAO = new MemoryGameDAO();
 
         AuthHelper authHelper = new AuthHelper(authDAO);
         UserService userService = new UserService(userDAO, authDAO, authHelper);
