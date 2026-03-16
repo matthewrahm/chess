@@ -1,10 +1,11 @@
 package server;
 
 import dataaccess.AuthDAO;
+import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
-import dataaccess.MemoryAuthDAO;
-import dataaccess.MemoryGameDAO;
-import dataaccess.MemoryUserDAO;
+import dataaccess.MySqlAuthDAO;
+import dataaccess.MySqlGameDAO;
+import dataaccess.MySqlUserDAO;
 import dataaccess.UserDAO;
 import handler.ClearHandler;
 import handler.GameHandler;
@@ -25,9 +26,16 @@ public class Server {
     private final Javalin javalin;
 
     public Server() {
-        UserDAO userDAO = new MemoryUserDAO();
-        AuthDAO authDAO = new MemoryAuthDAO();
-        GameDAO gameDAO = new MemoryGameDAO();
+        UserDAO userDAO;
+        AuthDAO authDAO;
+        GameDAO gameDAO;
+        try {
+            userDAO = new MySqlUserDAO();
+            authDAO = new MySqlAuthDAO();
+            gameDAO = new MySqlGameDAO();
+        } catch (DataAccessException ex) {
+            throw new RuntimeException("failed to initialize database", ex);
+        }
 
         AuthHelper authHelper = new AuthHelper(authDAO);
         UserService userService = new UserService(userDAO, authDAO, authHelper);
