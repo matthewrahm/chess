@@ -95,4 +95,20 @@ public class ServerFacadeTests {
                 facade.createGame("bad-token", "Test Game"));
         assertEquals(401, ex.getStatusCode());
     }
+
+    @Test
+    void listGamesSuccess() throws ServerFacadeException {
+        var auth = facade.register("player1", "password", "p1@email.com");
+        facade.createGame(auth.authToken(), "Game 1");
+        facade.createGame(auth.authToken(), "Game 2");
+        var games = facade.listGames(auth.authToken());
+        assertEquals(2, games.length);
+    }
+
+    @Test
+    void listGamesUnauthorized() {
+        var ex = assertThrows(ServerFacadeException.class, () ->
+                facade.listGames("bad-token"));
+        assertEquals(401, ex.getStatusCode());
+    }
 }
