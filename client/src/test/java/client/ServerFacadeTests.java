@@ -103,6 +103,8 @@ public class ServerFacadeTests {
         facade.createGame(auth.authToken(), "Game 2");
         var games = facade.listGames(auth.authToken());
         assertEquals(2, games.length);
+        assertNotNull(games[0].gameName());
+        assertNotNull(games[1].gameName());
     }
 
     @Test
