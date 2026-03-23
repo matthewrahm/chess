@@ -52,4 +52,20 @@ public class ServerFacadeTests {
                 facade.register("player1", "password", "p1@email.com"));
         assertEquals(403, ex.getStatusCode());
     }
+
+    @Test
+    void loginSuccess() throws ServerFacadeException {
+        facade.register("player1", "password", "p1@email.com");
+        var result = facade.login("player1", "password");
+        assertNotNull(result.authToken());
+        assertEquals("player1", result.username());
+    }
+
+    @Test
+    void loginWrongPassword() throws ServerFacadeException {
+        facade.register("player1", "password", "p1@email.com");
+        var ex = assertThrows(ServerFacadeException.class, () ->
+                facade.login("player1", "wrongpassword"));
+        assertEquals(401, ex.getStatusCode());
+    }
 }
