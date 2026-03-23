@@ -36,4 +36,20 @@ public class ServerFacadeTests {
         assertThrows(ServerFacadeException.class, () ->
                 facade.login("user1", "pass1"));
     }
+
+    @Test
+    void registerSuccess() throws ServerFacadeException {
+        var result = facade.register("player1", "password", "p1@email.com");
+        assertNotNull(result.authToken());
+        assertTrue(result.authToken().length() > 10);
+        assertEquals("player1", result.username());
+    }
+
+    @Test
+    void registerDuplicate() throws ServerFacadeException {
+        facade.register("player1", "password", "p1@email.com");
+        var ex = assertThrows(ServerFacadeException.class, () ->
+                facade.register("player1", "password", "p1@email.com"));
+        assertEquals(403, ex.getStatusCode());
+    }
 }
