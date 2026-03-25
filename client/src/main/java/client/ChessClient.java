@@ -61,6 +61,7 @@ public class ChessClient {
     private String evalPostlogin(String command, String[] params) throws ServerFacadeException {
         return switch (command) {
             case "help" -> postloginHelp();
+            case "quit" -> "quit";
             case "logout" -> logout();
             case "create" -> createGame(params);
             case "list" -> listGames();
@@ -82,9 +83,10 @@ public class ChessClient {
         return """
                   create <NAME> - create a new game
                   list - list all games
-                  play <ID> [WHITE|BLACK] - join a game
+                  play <ID> <WHITE|BLACK> - join a game
                   observe <ID> - watch a game in progress
                   logout - log out when you are done
+                  quit - exit the program
                   help - display available commands""";
     }
 

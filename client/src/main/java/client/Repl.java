@@ -1,5 +1,6 @@
 package client;
 
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 public class Repl {
@@ -18,12 +19,19 @@ public class Repl {
                     ? "[LOGGED_OUT] >>> "
                     : "[" + client.getUsername() + "] >>> ";
             System.out.print(prompt);
-            String line = scanner.nextLine();
+            String line;
+            try {
+                line = scanner.nextLine();
+            } catch (NoSuchElementException e) {
+                break;
+            }
             String result = client.eval(line);
             if (result.equals("quit")) {
                 break;
             }
-            System.out.println(result);
+            if (!result.isEmpty()) {
+                System.out.println(result);
+            }
         }
     }
 }
