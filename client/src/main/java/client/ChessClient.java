@@ -307,6 +307,9 @@ public class ChessClient {
         if (playerColor == null) {
             return "Observers cannot make moves.";
         }
+        if (ws == null || !ws.isOpen()) {
+            return "Not connected to game. Try leaving and rejoining.";
+        }
         if (params.length < 2) {
             return "Usage: move <FROM> <TO> [PROMOTION] (e.g., move e2 e4)";
         }
@@ -314,7 +317,7 @@ public class ChessClient {
         ChessPosition from = parsePosition(params[0]);
         ChessPosition to = parsePosition(params[1]);
         if (from == null || to == null) {
-            return "Invalid position. Use format like 'e2'.";
+            return "Invalid position. Use format like 'e2' (column letter + row number).";
         }
 
         ChessPiece.PieceType promotion = null;
@@ -340,6 +343,9 @@ public class ChessClient {
     }
 
     private String doResign() {
+        if (ws == null || !ws.isOpen()) {
+            return "Not connected to game.";
+        }
         try {
             ws.sendResign(authToken, currentGameID);
         } catch (IOException e) {
