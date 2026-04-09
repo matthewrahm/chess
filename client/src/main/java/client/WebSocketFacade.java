@@ -34,12 +34,21 @@ public class WebSocketFacade {
 
     @OnMessage
     public void onMessage(String message) {
-        ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
-        switch (serverMessage.getServerMessageType()) {
-            case LOAD_GAME -> handler.onLoadGame(gson.fromJson(message, LoadGameMessage.class));
-            case NOTIFICATION -> handler.onNotification(gson.fromJson(message, NotificationMessage.class));
-            case ERROR -> handler.onError(gson.fromJson(message, ErrorMessage.class));
+        try {
+            ServerMessage serverMessage = gson.fromJson(message, ServerMessage.class);
+            switch (serverMessage.getServerMessageType()) {
+                case LOAD_GAME -> handler.onLoadGame(gson.fromJson(message, LoadGameMessage.class));
+                case NOTIFICATION -> handler.onNotification(gson.fromJson(message, NotificationMessage.class));
+                case ERROR -> handler.onError(gson.fromJson(message, ErrorMessage.class));
+            }
+        } catch (Exception e) {
+            handler.onError(new ErrorMessage("Error: failed to parse server message"));
         }
+    }
+
+    @OnError
+    public void onError(Session session, Throwable throwable) {
+        handler.onError(new ErrorMessage("Error: WebSocket error - " + throwable.getMessage()));
     }
 
     public void sendConnect(String authToken, int gameID) throws IOException {
@@ -63,6 +72,12 @@ public class WebSocketFacade {
     }
 
     public void close() throws IOException {
-        session.close();
+        if (session != null && session.isOpen()) {
+            session.close();
+        }
+    }
+
+    public boolean isOpen() {
+        return session != null && session.isOpen();
     }
 }
