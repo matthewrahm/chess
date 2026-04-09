@@ -24,6 +24,8 @@ public class ChessGame {
 
     private ChessMove lastMove;
 
+    private boolean isOver;
+
     public ChessGame() {
         board = new ChessBoard();
         board.resetBoard();
@@ -35,6 +37,14 @@ public class ChessGame {
      */
     public TeamColor getTeamTurn() {
         return currentTurn;
+    }
+
+    public boolean isOver() {
+        return isOver;
+    }
+
+    public void setOver(boolean over) {
+        this.isOver = over;
     }
 
     /**
