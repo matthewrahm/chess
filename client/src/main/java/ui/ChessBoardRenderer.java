@@ -5,6 +5,10 @@ import chess.ChessGame;
 import chess.ChessPiece;
 import chess.ChessPosition;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
 import static ui.EscapeSequences.*;
 
 public class ChessBoardRenderer {
@@ -13,8 +17,15 @@ public class ChessBoardRenderer {
     private static final String DARK_BG = SET_BG_COLOR_DARK_GREEN;
     private static final String BORDER_BG = SET_BG_COLOR_DARK_GREY;
     private static final String BORDER_TEXT = SET_TEXT_COLOR_WHITE;
+    private static final String HIGHLIGHT_LIGHT_BG = SET_BG_COLOR_YELLOW;
+    private static final String HIGHLIGHT_DARK_BG = SET_BG_COLOR_GREEN;
 
     public static String render(ChessBoard board, ChessGame.TeamColor perspective) {
+        return render(board, perspective, null);
+    }
+
+    public static String render(ChessBoard board, ChessGame.TeamColor perspective,
+                                Collection<ChessPosition> highlights) {
         StringBuilder sb = new StringBuilder();
         sb.append("\n");
 
@@ -22,6 +33,8 @@ public class ChessBoardRenderer {
         String[] colLabels = whiteBottom
                 ? new String[]{"a", "b", "c", "d", "e", "f", "g", "h"}
                 : new String[]{"h", "g", "f", "e", "d", "c", "b", "a"};
+
+        Set<ChessPosition> highlightSet = highlights != null ? new HashSet<>(highlights) : Set.of();
 
         appendColumnHeader(sb, colLabels);
 
@@ -38,7 +51,13 @@ public class ChessBoardRenderer {
 
             for (int col = colStart; whiteBottom ? col <= colEnd : col >= colEnd; col += colStep) {
                 boolean isLight = (row + col) % 2 == 1;
-                sb.append(isLight ? LIGHT_BG : DARK_BG);
+                boolean isHighlighted = highlightSet.contains(new ChessPosition(row, col));
+
+                if (isHighlighted) {
+                    sb.append(isLight ? HIGHLIGHT_LIGHT_BG : HIGHLIGHT_DARK_BG);
+                } else {
+                    sb.append(isLight ? LIGHT_BG : DARK_BG);
+                }
 
                 ChessPiece piece = board.getPiece(new ChessPosition(row, col));
                 if (piece == null) {
