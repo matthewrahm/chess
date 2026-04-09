@@ -1,16 +1,42 @@
 package client;
 
+import chess.ChessGame;
+import chess.ChessMove;
+import chess.ChessPiece;
+import chess.ChessPosition;
+import model.GameData;
+import ui.ChessBoardRenderer;
+import websocket.messages.ErrorMessage;
+import websocket.messages.LoadGameMessage;
+import websocket.messages.NotificationMessage;
+
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
+import static ui.EscapeSequences.*;
+
 public class ChessClient {
 
     private final ServerFacade facade;
+    private final int port;
     private String authToken;
     private String username;
     private State state = State.LOGGED_OUT;
     private ServerFacade.GameInfo[] cachedGames;
 
-    public enum State { LOGGED_OUT, LOGGED_IN }
+    private WebSocketFacade ws;
+    private int currentGameID;
+    private ChessGame.TeamColor playerColor;
+    private ChessGame currentGame;
+    private boolean awaitingResignConfirm;
+
+    public enum State { LOGGED_OUT, LOGGED_IN, GAMEPLAY }
 
     public ChessClient(int port) {
+        this.port = port;
         this.facade = new ServerFacade(port);
     }
 
@@ -32,11 +58,11 @@ public class ChessClient {
             String[] params = new String[tokens.length - 1];
             System.arraycopy(tokens, 1, params, 0, params.length);
 
-            if (state == State.LOGGED_OUT) {
-                return evalPrelogin(command, params);
-            } else {
-                return evalPostlogin(command, params);
-            }
+            return switch (state) {
+                case LOGGED_OUT -> evalPrelogin(command, params);
+                case LOGGED_IN -> evalPostlogin(command, params);
+                case GAMEPLAY -> evalGameplay(command, params);
+            };
         } catch (ServerFacadeException e) {
             String msg = e.getMessage();
             if (msg.startsWith("Error: ")) {
@@ -71,6 +97,30 @@ public class ChessClient {
         };
     }
 
+    private String evalGameplay(String command, String[] params) {
+        if (awaitingResignConfirm) {
+            awaitingResignConfirm = false;
+            if (command.equals("yes")) {
+                return doResign();
+            }
+            return "Resign cancelled.";
+        }
+
+        return switch (command) {
+            case "help" -> gameplayHelp();
+            case "quit" -> {
+                leaveGame();
+                yield "quit";
+            }
+            case "redraw" -> redrawBoard();
+            case "leave" -> leaveGame();
+            case "move" -> makeMove(params);
+            case "resign" -> confirmResign();
+            case "highlight" -> highlightMoves(params);
+            default -> "Unknown command. Type 'help' for available commands.";
+        };
+    }
+
     private String preloginHelp() {
         return """
                   register <USERNAME> <PASSWORD> <EMAIL> - create an account
@@ -87,6 +137,16 @@ public class ChessClient {
                   observe <ID> - watch a game in progress
                   logout - log out when you are done
                   quit - exit the program
+                  help - display available commands""";
+    }
+
+    private String gameplayHelp() {
+        return """
+                  move <FROM> <TO> [PROMOTION] - make a move (e.g., move e2 e4)
+                  highlight <POSITION> - show legal moves for a piece (e.g., highlight e2)
+                  redraw - redraw the chess board
+                  resign - forfeit the game
+                  leave - leave the game
                   help - display available commands""";
     }
 
@@ -169,12 +229,19 @@ public class ChessClient {
         int gameID = cachedGames[index].gameID();
         facade.joinGame(authToken, color, gameID);
 
-        chess.ChessGame game = new chess.ChessGame();
-        chess.ChessGame.TeamColor perspective = color.equals("WHITE")
-                ? chess.ChessGame.TeamColor.WHITE
-                : chess.ChessGame.TeamColor.BLACK;
-        return "Joined game as " + color + ".\n" +
-                ui.ChessBoardRenderer.render(game.getBoard(), perspective);
+        playerColor = color.equals("WHITE") ? ChessGame.TeamColor.WHITE : ChessGame.TeamColor.BLACK;
+        currentGameID = gameID;
+
+        try {
+            String wsUrl = "ws://localhost:" + port + "/ws";
+            ws = new WebSocketFacade(wsUrl, createMessageHandler());
+            ws.sendConnect(authToken, gameID);
+        } catch (Exception e) {
+            return "Failed to connect to game: " + e.getMessage();
+        }
+
+        state = State.GAMEPLAY;
+        return "Joined game as " + color + ".";
     }
 
     private String observeGame(String[] params) {
@@ -193,8 +260,167 @@ public class ChessClient {
         if (index < 0 || index >= cachedGames.length) {
             return "Game number out of range. Use 'list' to see available games.";
         }
-        chess.ChessGame game = new chess.ChessGame();
-        return "Observing game '" + cachedGames[index].gameName() + "'.\n" +
-                ui.ChessBoardRenderer.render(game.getBoard(), chess.ChessGame.TeamColor.WHITE);
+
+        int gameID = cachedGames[index].gameID();
+        playerColor = null;
+        currentGameID = gameID;
+
+        try {
+            String wsUrl = "ws://localhost:" + port + "/ws";
+            ws = new WebSocketFacade(wsUrl, createMessageHandler());
+            ws.sendConnect(authToken, gameID);
+        } catch (Exception e) {
+            return "Failed to connect to game: " + e.getMessage();
+        }
+
+        state = State.GAMEPLAY;
+        return "Observing game '" + cachedGames[index].gameName() + "'.";
+    }
+
+    private String redrawBoard() {
+        if (currentGame == null) {
+            return "No game loaded yet.";
+        }
+        ChessGame.TeamColor perspective = playerColor != null ? playerColor : ChessGame.TeamColor.WHITE;
+        return ChessBoardRenderer.render(currentGame.getBoard(), perspective);
+    }
+
+    private String leaveGame() {
+        try {
+            if (ws != null) {
+                ws.sendLeave(authToken, currentGameID);
+                ws.close();
+            }
+        } catch (IOException e) {
+            // Ignore close errors
+        }
+        ws = null;
+        currentGame = null;
+        currentGameID = 0;
+        playerColor = null;
+        awaitingResignConfirm = false;
+        state = State.LOGGED_IN;
+        return "Left the game.";
+    }
+
+    private String makeMove(String[] params) {
+        if (playerColor == null) {
+            return "Observers cannot make moves.";
+        }
+        if (params.length < 2) {
+            return "Usage: move <FROM> <TO> [PROMOTION] (e.g., move e2 e4)";
+        }
+
+        ChessPosition from = parsePosition(params[0]);
+        ChessPosition to = parsePosition(params[1]);
+        if (from == null || to == null) {
+            return "Invalid position. Use format like 'e2'.";
+        }
+
+        ChessPiece.PieceType promotion = null;
+        if (params.length >= 3) {
+            promotion = parsePromotion(params[2]);
+            if (promotion == null) {
+                return "Invalid promotion piece. Use: queen, rook, bishop, knight.";
+            }
+        }
+
+        ChessMove move = new ChessMove(from, to, promotion);
+        try {
+            ws.sendMakeMove(authToken, currentGameID, move);
+        } catch (IOException e) {
+            return "Error sending move: " + e.getMessage();
+        }
+        return "";
+    }
+
+    private String confirmResign() {
+        awaitingResignConfirm = true;
+        return "Are you sure you want to resign? Type 'yes' to confirm.";
+    }
+
+    private String doResign() {
+        try {
+            ws.sendResign(authToken, currentGameID);
+        } catch (IOException e) {
+            return "Error: " + e.getMessage();
+        }
+        return "";
+    }
+
+    private String highlightMoves(String[] params) {
+        if (params.length < 1) {
+            return "Usage: highlight <POSITION> (e.g., highlight e2)";
+        }
+        if (currentGame == null) {
+            return "No game loaded yet.";
+        }
+
+        ChessPosition pos = parsePosition(params[0]);
+        if (pos == null) {
+            return "Invalid position. Use format like 'e2'.";
+        }
+
+        Collection<ChessMove> moves = currentGame.validMoves(pos);
+        if (moves == null || moves.isEmpty()) {
+            return "No legal moves for that position.";
+        }
+
+        Set<ChessPosition> highlights = new HashSet<>();
+        highlights.add(pos);
+        for (ChessMove move : moves) {
+            highlights.add(move.getEndPosition());
+        }
+
+        ChessGame.TeamColor perspective = playerColor != null ? playerColor : ChessGame.TeamColor.WHITE;
+        return ChessBoardRenderer.render(currentGame.getBoard(), perspective, highlights);
+    }
+
+    private ChessPosition parsePosition(String input) {
+        if (input == null || input.length() != 2) {
+            return null;
+        }
+        char colChar = Character.toLowerCase(input.charAt(0));
+        char rowChar = input.charAt(1);
+        if (colChar < 'a' || colChar > 'h' || rowChar < '1' || rowChar > '8') {
+            return null;
+        }
+        return new ChessPosition(rowChar - '0', colChar - 'a' + 1);
+    }
+
+    private ChessPiece.PieceType parsePromotion(String input) {
+        return switch (input.toLowerCase()) {
+            case "queen", "q" -> ChessPiece.PieceType.QUEEN;
+            case "rook", "r" -> ChessPiece.PieceType.ROOK;
+            case "bishop", "b" -> ChessPiece.PieceType.BISHOP;
+            case "knight", "n" -> ChessPiece.PieceType.KNIGHT;
+            default -> null;
+        };
+    }
+
+    private WebSocketFacade.ServerMessageHandler createMessageHandler() {
+        return new WebSocketFacade.ServerMessageHandler() {
+            @Override
+            public void onLoadGame(LoadGameMessage message) {
+                GameData gameData = message.getGame();
+                if (gameData != null && gameData.game() != null) {
+                    currentGame = gameData.game();
+                }
+                ChessGame.TeamColor perspective = playerColor != null ? playerColor : ChessGame.TeamColor.WHITE;
+                if (currentGame != null) {
+                    System.out.println(ChessBoardRenderer.render(currentGame.getBoard(), perspective));
+                }
+            }
+
+            @Override
+            public void onNotification(NotificationMessage message) {
+                System.out.println("\n" + SET_TEXT_COLOR_YELLOW + message.getMessage() + RESET_TEXT_COLOR);
+            }
+
+            @Override
+            public void onError(ErrorMessage message) {
+                System.out.println("\n" + SET_TEXT_COLOR_RED + message.getErrorMessage() + RESET_TEXT_COLOR);
+            }
+        };
     }
 }
