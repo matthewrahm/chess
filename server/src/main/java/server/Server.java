@@ -19,6 +19,7 @@ import service.ClearService;
 import service.GameService;
 import service.ServiceException;
 import service.UserService;
+import websocket.WebSocketHandler;
 
 /** Chess server application that configures and runs the Javalin HTTP server. */
 public class Server {
@@ -46,8 +47,14 @@ public class Server {
         SessionHandler sessionHandler = new SessionHandler(userService);
         GameHandler gameHandler = new GameHandler(gameService);
         ClearHandler clearHandler = new ClearHandler(clearService);
+        WebSocketHandler wsHandler = new WebSocketHandler(authHelper, gameDAO);
 
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
+
+        javalin.ws("/ws", ws -> {
+            ws.onMessage(ctx -> wsHandler.handleMessage(ctx.session, ctx.message));
+            ws.onClose(ctx -> wsHandler.handleClose(ctx.session, ctx.statusCode, ctx.reason));
+        });
 
         javalin.delete("/db", clearHandler::clear);
         javalin.post("/user", userHandler::register);
