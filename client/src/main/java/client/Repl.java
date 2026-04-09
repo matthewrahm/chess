@@ -12,12 +12,14 @@ public class Repl {
     }
 
     public void run() {
-        System.out.println("♕ 240 Chess Client. Type 'help' to get started.");
+        System.out.println("\u2655 240 Chess Client. Type 'help' to get started.");
         Scanner scanner = new Scanner(System.in);
         while (true) {
-            String prompt = (client.getState() == ChessClient.State.LOGGED_OUT)
-                    ? "[LOGGED_OUT] >>> "
-                    : "[" + client.getUsername() + "] >>> ";
+            String prompt = switch (client.getState()) {
+                case LOGGED_OUT -> "[LOGGED_OUT] >>> ";
+                case LOGGED_IN -> "[" + client.getUsername() + "] >>> ";
+                case GAMEPLAY -> "[GAMEPLAY] >>> ";
+            };
             System.out.print(prompt);
             String line;
             try {
