@@ -52,8 +52,8 @@ public class Server {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
 
         javalin.ws("/ws", ws -> {
-            ws.onMessage(ctx -> wsHandler.handleMessage(ctx.session, ctx.message));
-            ws.onClose(ctx -> wsHandler.handleClose(ctx.session, ctx.statusCode, ctx.reason));
+            ws.onMessage(ctx -> wsHandler.handleMessage(ctx.session, ctx.message()));
+            ws.onClose(ctx -> wsHandler.handleClose(ctx.session));
         });
 
         javalin.delete("/db", clearHandler::clear);

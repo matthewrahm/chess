@@ -61,7 +61,7 @@ public class WebSocketHandler {
         }
     }
 
-    public void handleClose(Session session, int statusCode, String reason) {
+    public void handleClose(Session session) {
         connections.removeBySession(session);
     }
 
