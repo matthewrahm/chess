@@ -58,7 +58,7 @@ public class ChessPiece {
             case KING -> new KingMoveCalculator().calculateMoves(board, myPosition, pieceColor);
             case QUEEN -> getQueenMoves(board, myPosition);
             case BISHOP -> getBishopMoves(board, myPosition);
-            case KNIGHT -> getKnightMoves(board, myPosition);
+            case KNIGHT -> new KnightMoveCalculator().calculateMoves(board, myPosition, pieceColor);
             case ROOK -> getRookMoves(board, myPosition);
             case PAWN -> getPawnMoves(board, myPosition);
         };
@@ -88,26 +88,6 @@ public class ChessPiece {
             {1, 1}, {1, -1}, {-1, 1}, {-1, -1} // diagonal (bishop)
         };
         addSlidingMoves(board, myPosition, directions, moves);
-        return moves;
-    }
-
-    private Collection<ChessMove> getKnightMoves(ChessBoard board, ChessPosition myPosition) {
-        Collection<ChessMove> moves = new ArrayList<>();
-        int row = myPosition.getRow();
-        int col = myPosition.getColumn();
-
-        // Knight moves in L-shape: 2 squares one direction, 1 square perpendicular
-        int[][] jumps = {
-            {2, 1}, {2, -1}, {-2, 1}, {-2, -1},
-            {1, 2}, {1, -2}, {-1, 2}, {-1, -2}
-        };
-
-        for (int[] jump : jumps) {
-            int newRow = row + jump[0];
-            int newCol = col + jump[1];
-            addMoveIfValid(board, myPosition, newRow, newCol, moves);
-        }
-
         return moves;
     }
 
@@ -200,23 +180,6 @@ public class ChessPiece {
                 newRow += dir[0];
                 newCol += dir[1];
             }
-        }
-    }
-
-    /**
-     * Helper method to add a move if the target square is valid (on board and not occupied by friendly piece)
-     */
-    private void addMoveIfValid(ChessBoard board, ChessPosition from, int toRow, int toCol, Collection<ChessMove> moves) {
-        if (toRow < 1 || toRow > 8 || toCol < 1 || toCol > 8) {
-            return; // Off the board
-        }
-
-        ChessPosition to = new ChessPosition(toRow, toCol);
-        ChessPiece pieceAtTarget = board.getPiece(to);
-
-        if (pieceAtTarget == null || pieceAtTarget.getTeamColor() != this.pieceColor) {
-            // Empty square or enemy piece - valid move
-            moves.add(new ChessMove(from, to, null));
         }
     }
 
