@@ -22,3 +22,27 @@ The repository is https://github.com/matthewrahm/chess.
 4. Stage the relevant files, commit with a descriptive message, and push.
 
 Update these notes with techniques and technologies learned throughout the course.
+
+## Phase 0 review plan
+
+The repository already contains the previous implementation. These eight steps
+review and separate the movement rules without resetting the project.
+
+1. Move king rules into a calculator with a shared move-validation helper.
+2. Move knight rules into a calculator and reuse the helper.
+3. Extract rook rules and shared sliding movement.
+4. Extract bishop rules using the sliding helper.
+5. Extract queen rules using the sliding helper.
+6. Extract pawn rules, including double moves, captures, and promotion.
+7. Review board setup and simplify repeated placement code.
+8. Review movement edge cases and run the full Phase 0 checks.
+
+The public chess method signatures stay the same. Movement calculators handle
+piece rules; check and turn rules remain in ChessGame.
+
+### Current progress
+
+Step 1 is complete on `main`. King movement uses its own calculator, which
+handles one-square moves through the common bounds and occupancy check.
+`mvn -pl shared test`: 119 tests passed with no failures or errors.
+Next: move knight movement into a calculator.

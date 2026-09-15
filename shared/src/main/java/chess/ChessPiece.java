@@ -55,33 +55,13 @@ public class ChessPiece {
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         return switch (type) {
-            case KING -> getKingMoves(board, myPosition);
+            case KING -> new KingMoveCalculator().calculateMoves(board, myPosition, pieceColor);
             case QUEEN -> getQueenMoves(board, myPosition);
             case BISHOP -> getBishopMoves(board, myPosition);
             case KNIGHT -> getKnightMoves(board, myPosition);
             case ROOK -> getRookMoves(board, myPosition);
             case PAWN -> getPawnMoves(board, myPosition);
         };
-    }
-
-    private Collection<ChessMove> getKingMoves(ChessBoard board, ChessPosition myPosition) {
-        Collection<ChessMove> moves = new ArrayList<>();
-        int row = myPosition.getRow();
-        int col = myPosition.getColumn();
-
-        // King can move one square in any direction
-        int[][] directions = {
-            {1, 0}, {-1, 0}, {0, 1}, {0, -1},  // orthogonal
-            {1, 1}, {1, -1}, {-1, 1}, {-1, -1} // diagonal
-        };
-
-        for (int[] dir : directions) {
-            int newRow = row + dir[0];
-            int newCol = col + dir[1];
-            addMoveIfValid(board, myPosition, newRow, newCol, moves);
-        }
-
-        return moves;
     }
 
     private Collection<ChessMove> getRookMoves(ChessBoard board, ChessPosition myPosition) {
