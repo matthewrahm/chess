@@ -59,36 +59,24 @@ public class ChessPiece {
             case QUEEN -> getQueenMoves(board, myPosition);
             case BISHOP -> getBishopMoves(board, myPosition);
             case KNIGHT -> new KnightMoveCalculator().calculateMoves(board, myPosition, pieceColor);
-            case ROOK -> getRookMoves(board, myPosition);
+            case ROOK -> new RookMoveCalculator().calculateMoves(board, myPosition, pieceColor);
             case PAWN -> getPawnMoves(board, myPosition);
         };
     }
 
-    private Collection<ChessMove> getRookMoves(ChessBoard board, ChessPosition myPosition) {
-        Collection<ChessMove> moves = new ArrayList<>();
-        // Rook moves horizontally and vertically
-        int[][] directions = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
-        addSlidingMoves(board, myPosition, directions, moves);
-        return moves;
-    }
-
     private Collection<ChessMove> getBishopMoves(ChessBoard board, ChessPosition myPosition) {
-        Collection<ChessMove> moves = new ArrayList<>();
         // Bishop moves diagonally
         int[][] directions = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
-        addSlidingMoves(board, myPosition, directions, moves);
-        return moves;
+        return SlidingMoves.calculateMoves(board, myPosition, pieceColor, directions);
     }
 
     private Collection<ChessMove> getQueenMoves(ChessBoard board, ChessPosition myPosition) {
-        Collection<ChessMove> moves = new ArrayList<>();
         // Queen moves like rook + bishop (all 8 directions)
         int[][] directions = {
             {1, 0}, {-1, 0}, {0, 1}, {0, -1},  // orthogonal (rook)
             {1, 1}, {1, -1}, {-1, 1}, {-1, -1} // diagonal (bishop)
         };
-        addSlidingMoves(board, myPosition, directions, moves);
-        return moves;
+        return SlidingMoves.calculateMoves(board, myPosition, pieceColor, directions);
     }
 
     private Collection<ChessMove> getPawnMoves(ChessBoard board, ChessPosition myPosition) {
@@ -147,39 +135,6 @@ public class ChessPiece {
             moves.add(new ChessMove(from, to, PieceType.KNIGHT));
         } else {
             moves.add(new ChessMove(from, to, null));
-        }
-    }
-
-    /**
-     * Helper for sliding pieces (rook, bishop, queen) - moves in a direction until blocked
-     */
-    private void addSlidingMoves(ChessBoard board, ChessPosition from, int[][] directions, Collection<ChessMove> moves) {
-        int row = from.getRow();
-        int col = from.getColumn();
-
-        for (int[] dir : directions) {
-            int newRow = row + dir[0];
-            int newCol = col + dir[1];
-
-            while (newRow >= 1 && newRow <= 8 && newCol >= 1 && newCol <= 8) {
-                ChessPosition to = new ChessPosition(newRow, newCol);
-                ChessPiece pieceAtTarget = board.getPiece(to);
-
-                if (pieceAtTarget == null) {
-                    // Empty square - can move here and continue
-                    moves.add(new ChessMove(from, to, null));
-                } else if (pieceAtTarget.getTeamColor() != this.pieceColor) {
-                    // Enemy piece - can capture but must stop
-                    moves.add(new ChessMove(from, to, null));
-                    break;
-                } else {
-                    // Friendly piece - blocked, stop
-                    break;
-                }
-
-                newRow += dir[0];
-                newCol += dir[1];
-            }
         }
     }
 
