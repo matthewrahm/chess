@@ -57,17 +57,11 @@ public class ChessPiece {
         return switch (type) {
             case KING -> new KingMoveCalculator().calculateMoves(board, myPosition, pieceColor);
             case QUEEN -> getQueenMoves(board, myPosition);
-            case BISHOP -> getBishopMoves(board, myPosition);
+            case BISHOP -> new BishopMoveCalculator().calculateMoves(board, myPosition, pieceColor);
             case KNIGHT -> new KnightMoveCalculator().calculateMoves(board, myPosition, pieceColor);
             case ROOK -> new RookMoveCalculator().calculateMoves(board, myPosition, pieceColor);
             case PAWN -> getPawnMoves(board, myPosition);
         };
-    }
-
-    private Collection<ChessMove> getBishopMoves(ChessBoard board, ChessPosition myPosition) {
-        // Bishop moves diagonally
-        int[][] directions = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
-        return SlidingMoves.calculateMoves(board, myPosition, pieceColor, directions);
     }
 
     private Collection<ChessMove> getQueenMoves(ChessBoard board, ChessPosition myPosition) {
