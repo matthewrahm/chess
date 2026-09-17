@@ -42,10 +42,9 @@ piece rules; check and turn rules remain in ChessGame.
 
 ### Current progress
 
-Steps 1 through 4 are complete on `main`. King, knight, rook, and bishop movement
-use separate calculators. `SlidingMoves` follows a direction until the board edge
-or an occupied square. Enemy pieces can be captured, but movement stops there.
-Rook, bishop, and queen movement share this helper.
-`mvn -pl shared test`: 119 tests passed after each of the rook and bishop changes,
-with no failures or errors.
-Next: extract queen movement into its own calculator (step 5).
+Steps 1 through 5 are complete on `main`. King, knight, rook, bishop, and queen
+movement use separate calculators. The queen uses the shared sliding helper
+with both horizontal/vertical and diagonal directions.
+`mvn -pl shared test`: 119 tests passed after the queen change, with no failures
+or errors.
+Next: extract pawn movement, captures, and promotion (step 6).
