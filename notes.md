@@ -42,9 +42,10 @@ piece rules; check and turn rules remain in ChessGame.
 
 ### Current progress
 
-Steps 1 through 5 are complete on `main`. King, knight, rook, bishop, and queen
-movement use separate calculators. The queen uses the shared sliding helper
-with both horizontal/vertical and diagonal directions.
-`mvn -pl shared test`: 119 tests passed after the queen change, with no failures
-or errors.
-Next: extract pawn movement, captures, and promotion (step 6).
+Steps 1 through 6 are complete on `main`. All six pieces use separate movement
+calculators. The queen uses the shared sliding helper. The pawn calculator
+handles each color's direction, blocked forward moves, double moves from the
+starting row, diagonal captures, and the four promotion choices.
+`mvn -pl shared test`: 119 tests passed after each of the queen and pawn changes,
+with no failures or errors. Public chess method signatures are unchanged.
+Next: review board setup and simplify repeated placement code (step 7).
