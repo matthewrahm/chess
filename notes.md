@@ -42,9 +42,12 @@ piece rules; check and turn rules remain in ChessGame.
 
 ### Current progress
 
-Steps 1 through 7 are complete on `main`. All six pieces use separate movement
+Steps 1 through 8 are complete on `main`. All six pieces use separate movement
 calculators. Board reset clears each row with Arrays.fill and uses one placement
 helper for both teams. Public chess method signatures are unchanged.
-`mvn -pl shared test`: 119 tests passed after the board cleanup, with no failures
-or errors.
-Next: check movement edge cases and submit Phase 0 (step 8).
+Added edge-case tests for resetting a changed board, finding moves without
+changing the board, pawns at the last rank, and moves that expose the king.
+The last case belongs in pieceMoves because ChessGame handles check rules.
+`mvn -pl shared test`: 123 tests passed, with no failures or errors.
+`mvn -DskipTests package`: all three modules built successfully.
+Next: submit Phase 0 through cs240.click and check the grader result.
