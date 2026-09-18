@@ -41,11 +41,8 @@ public class ChessBoard {
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
-        // Clear the board first
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                squares[row][col] = null;
-            }
+        for (ChessPiece[] row : squares) {
+            Arrays.fill(row, null);
         }
 
         // Back row piece order: Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook
@@ -60,16 +57,16 @@ public class ChessBoard {
             ChessPiece.PieceType.ROOK
         };
 
-        // Place white pieces (rows 1 and 2)
-        for (int col = 1; col <= 8; col++) {
-            addPiece(new ChessPosition(1, col), new ChessPiece(ChessGame.TeamColor.WHITE, backRow[col - 1]));
-            addPiece(new ChessPosition(2, col), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN));
-        }
+        placeStartingPieces(ChessGame.TeamColor.WHITE, backRow);
+        placeStartingPieces(ChessGame.TeamColor.BLACK, backRow);
+    }
 
-        // Place black pieces (rows 7 and 8)
+    private void placeStartingPieces(ChessGame.TeamColor color, ChessPiece.PieceType[] backRow) {
+        int pieceRow = color == ChessGame.TeamColor.WHITE ? 1 : 8;
+        int pawnRow = color == ChessGame.TeamColor.WHITE ? 2 : 7;
         for (int col = 1; col <= 8; col++) {
-            addPiece(new ChessPosition(7, col), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN));
-            addPiece(new ChessPosition(8, col), new ChessPiece(ChessGame.TeamColor.BLACK, backRow[col - 1]));
+            addPiece(new ChessPosition(pieceRow, col), new ChessPiece(color, backRow[col - 1]));
+            addPiece(new ChessPosition(pawnRow, col), new ChessPiece(color, ChessPiece.PieceType.PAWN));
         }
     }
 

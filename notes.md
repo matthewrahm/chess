@@ -42,10 +42,9 @@ piece rules; check and turn rules remain in ChessGame.
 
 ### Current progress
 
-Steps 1 through 6 are complete on `main`. All six pieces use separate movement
-calculators. The queen uses the shared sliding helper. The pawn calculator
-handles each color's direction, blocked forward moves, double moves from the
-starting row, diagonal captures, and the four promotion choices.
-`mvn -pl shared test`: 119 tests passed after each of the queen and pawn changes,
-with no failures or errors. Public chess method signatures are unchanged.
-Next: review board setup and simplify repeated placement code (step 7).
+Steps 1 through 7 are complete on `main`. All six pieces use separate movement
+calculators. Board reset clears each row with Arrays.fill and uses one placement
+helper for both teams. Public chess method signatures are unchanged.
+`mvn -pl shared test`: 119 tests passed after the board cleanup, with no failures
+or errors.
+Next: check movement edge cases and submit Phase 0 (step 8).
