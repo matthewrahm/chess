@@ -50,4 +50,18 @@ changing the board, pawns at the last rank, and moves that expose the king.
 The last case belongs in pieceMoves because ChessGame handles check rules.
 `mvn -pl shared test`: 123 tests passed, with no failures or errors.
 `mvn -DskipTests package`: all three modules built successfully.
-Next: submit Phase 0 through cs240.click and check the grader result.
+The checks above describe the September 18 snapshot before the later-phase reset.
+
+## Fall 2026 starting point
+
+The September Phase 0 implementation and tests are preserved. ChessGame and the
+client/server entry points are restored to the original starter versions. Older
+Phase 1 and later implementations and their active tests were removed; the
+supplied files remain in starter-code for use when each phase begins.
+All previous commits remain in Git history.
+
+Validation after reset: `mvn clean verify` with Java 21 passed all 68 Phase 0
+tests and built all three modules. Phase 0 source and tests are unchanged from
+the September 18 commit; restored stubs match the original starter.
+
+Next: implement Phase 1 from the ChessGame starter and add its supplied game tests.
