@@ -71,4 +71,16 @@ turn accessors, and compare games by board and turn. Setup tests also check that
 separate games do not share mutable state.
 
 Validation: `mvn -pl shared test` with Java 21 passed 72 tests.
-Next: add king lookup and check detection. Later phases remain at their starter state.
+Day 1, commit 2: locate each team's king and detect attacks using the opponent's
+pieceMoves. Detection ignores the current turn and does not modify the board.
+Tests cover every piece and both colors, blocked attacks, pawn direction, and a
+pinned attacking piece.
+
+Validation: `mvn clean verify` with Java 21 passed all 79 active tests and built
+all three modules. The full Phase 1 passoff suite is not active yet because move
+execution, legal-move filtering, checkmate, and stalemate remain unimplemented.
+
+Progress: 2 of 10 Phase 1 commits on main. Next: simulate moves using the existing
+ChessBoard.copy helper, then implement validMoves. The board-copy helper already
+exists and does not need a separate implementation commit. Later phases remain
+at their starter state.
