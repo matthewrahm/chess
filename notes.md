@@ -64,4 +64,11 @@ Validation after reset: `mvn clean verify` with Java 21 passed all 68 Phase 0
 tests and built all three modules. Phase 0 source and tests are unchanged from
 the September 18 commit; restored stubs match the original starter.
 
-Next: implement Phase 1 from the ChessGame starter and add its supplied game tests.
+## Phase 1 progress
+
+Day 1, commit 1: initialize a standard board and White's turn, expose board and
+turn accessors, and compare games by board and turn. Setup tests also check that
+separate games do not share mutable state.
+
+Validation: `mvn -pl shared test` with Java 21 passed 72 tests.
+Next: add king lookup and check detection. Later phases remain at their starter state.
