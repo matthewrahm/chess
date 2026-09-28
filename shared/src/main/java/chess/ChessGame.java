@@ -72,7 +72,11 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        ChessPosition king = findKing(teamColor);
+        return isInCheck(board, teamColor);
+    }
+
+    private boolean isInCheck(ChessBoard board, TeamColor teamColor) {
+        ChessPosition king = findKing(board, teamColor);
         if (king == null) return false;
 
         for (int row = 1; row <= 8; row++) {
@@ -128,7 +132,18 @@ public class ChessGame {
         return board;
     }
 
-    private ChessPosition findKing(TeamColor teamColor) {
+    ChessBoard simulateMove(ChessMove move) {
+        ChessBoard nextBoard = board.copy();
+        ChessPiece piece = nextBoard.getPiece(move.getStartPosition());
+        nextBoard.addPiece(move.getStartPosition(), null);
+        if (move.getPromotionPiece() != null) {
+            piece = new ChessPiece(piece.getTeamColor(), move.getPromotionPiece());
+        }
+        nextBoard.addPiece(move.getEndPosition(), piece);
+        return nextBoard;
+    }
+
+    private ChessPosition findKing(ChessBoard board, TeamColor teamColor) {
         for (int row = 1; row <= 8; row++) {
             for (int col = 1; col <= 8; col++) {
                 ChessPosition position = new ChessPosition(row, col);

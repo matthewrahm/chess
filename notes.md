@@ -80,7 +80,12 @@ Validation: `mvn clean verify` with Java 21 passed all 79 active tests and built
 all three modules. The full Phase 1 passoff suite is not active yet because move
 execution, legal-move filtering, checkmate, and stalemate remain unimplemented.
 
-Progress: 2 of 10 Phase 1 commits on main. Next: simulate moves using the existing
-ChessBoard.copy helper, then implement validMoves. The board-copy helper already
-exists and does not need a separate implementation commit. Later phases remain
-at their starter state.
+Day 2, commit 3: simulate a candidate move on a copied board, including captures
+and promotion. Check detection can inspect a supplied board without swapping out
+the current board. Simulation tests verify that the original pieces and turn
+stay unchanged.
+
+Validation: `mvn -pl shared test` with Java 21 passed all 82 active tests.
+
+Progress: 3 of 10 Phase 1 commits on main. Next: use simulated boards to filter
+validMoves. Later phases remain at their starter state.
