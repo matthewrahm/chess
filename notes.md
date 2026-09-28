@@ -87,5 +87,18 @@ stay unchanged.
 
 Validation: `mvn -pl shared test` with Java 21 passed all 82 active tests.
 
-Progress: 3 of 10 Phase 1 commits on main. Next: use simulated boards to filter
-validMoves. Later phases remain at their starter state.
+Day 2, commit 4: validMoves filters the existing piece moves using a simulated
+board and the moving team's king safety. Empty squares return null, and move
+queries work independently of whose turn it is. Activated the six supplied
+ValidMovesTests unchanged and added checks for game preservation, protected
+captures, and promotion captures that remove check.
+
+Validation: `mvn clean verify` with Java 21 passed all 92 active tests and built
+all three modules. A new promotion test initially allowed an unintended blocking
+move; corrected its board setup to isolate capturing the checking rook. The
+implementation passed the supplied valid-move tests on the first run.
+
+Progress: 4 of 10 Phase 1 commits on main. Next: validate makeMove requests, then
+apply legal moves and advance the turn. Checkmate, stalemate, castling, and en
+passant remain for later planned commits. The full Phase 1 suite is not active
+yet; later phases remain at their starter state.
