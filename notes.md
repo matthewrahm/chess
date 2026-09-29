@@ -98,7 +98,14 @@ all three modules. A new promotion test initially allowed an unintended blocking
 move; corrected its board setup to isolate capturing the checking rook. The
 implementation passed the supplied valid-move tests on the first run.
 
-Progress: 4 of 10 Phase 1 commits on main. Next: validate makeMove requests, then
-apply legal moves and advance the turn. Checkmate, stalemate, castling, and en
-passant remain for later planned commits. The full Phase 1 suite is not active
-yet; later phases remain at their starter state.
+Day 3, commit 5: makeMove now rejects missing or out-of-bounds positions, empty
+starting squares, wrong-turn moves, and moves outside validMoves. Promotion
+choices are checked as part of matching a legal move. Rejected requests leave
+the board and turn unchanged. Accepted-move execution is the next step.
+
+Validation: `mvn -pl shared test` with Java 21 passed all 98 active tests.
+
+Progress: 5 of 10 Phase 1 commits on main. Next: apply accepted moves, including
+captures and promotion, then advance the turn. Checkmate, stalemate, castling,
+and en passant remain for later planned commits. Later phases remain at their
+starter state.
