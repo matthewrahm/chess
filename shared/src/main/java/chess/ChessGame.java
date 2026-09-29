@@ -86,7 +86,8 @@ public class ChessGame {
         if (!validMoves(move.getStartPosition()).contains(move)) {
             throw new InvalidMoveException("Move is not legal");
         }
-        throw new RuntimeException("Not implemented");
+        applyMove(board, move);
+        teamTurn = teamTurn == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE;
     }
 
     private boolean isOnBoard(ChessPosition position) {
@@ -163,13 +164,17 @@ public class ChessGame {
 
     ChessBoard simulateMove(ChessMove move) {
         ChessBoard nextBoard = board.copy();
-        ChessPiece piece = nextBoard.getPiece(move.getStartPosition());
-        nextBoard.addPiece(move.getStartPosition(), null);
+        applyMove(nextBoard, move);
+        return nextBoard;
+    }
+
+    private void applyMove(ChessBoard targetBoard, ChessMove move) {
+        ChessPiece piece = targetBoard.getPiece(move.getStartPosition());
+        targetBoard.addPiece(move.getStartPosition(), null);
         if (move.getPromotionPiece() != null) {
             piece = new ChessPiece(piece.getTeamColor(), move.getPromotionPiece());
         }
-        nextBoard.addPiece(move.getEndPosition(), piece);
-        return nextBoard;
+        targetBoard.addPiece(move.getEndPosition(), piece);
     }
 
     private ChessPosition findKing(ChessBoard board, TeamColor teamColor) {

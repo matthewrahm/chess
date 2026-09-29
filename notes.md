@@ -105,7 +105,17 @@ the board and turn unchanged. Accepted-move execution is the next step.
 
 Validation: `mvn -pl shared test` with Java 21 passed all 98 active tests.
 
-Progress: 5 of 10 Phase 1 commits on main. Next: apply accepted moves, including
-captures and promotion, then advance the turn. Checkmate, stalemate, castling,
-and en passant remain for later planned commits. Later phases remain at their
-starter state.
+Day 3, commit 6: accepted moves now update the existing board, replace captured
+pieces, promote pawns, and switch turns. A shared applyMove helper keeps move
+simulation and execution consistent. Activated the supplied MakeMoveTests and
+ChessGameTests unchanged. Additional tests cover a capture sequence, rejection
+between legal moves, escaping check by capture, and every promotion choice for
+both teams with and without capture.
+
+Validation: `mvn clean verify` with Java 21 passed all 127 active tests and built
+all three modules. All 22 supplied MakeMoveTests and three ChessGameTests pass.
+
+Progress: 6 of 10 Phase 1 commits on main. Next: implement checkmate, then
+stalemate, and activate the remaining core Phase 1 tests. Castling and en passant
+remain for the last two planned commits. Later phases remain at their starter
+state. Phase 1 is not complete or submitted yet.
