@@ -115,7 +115,13 @@ both teams with and without capture.
 Validation: `mvn clean verify` with Java 21 passed all 127 active tests and built
 all three modules. All 22 supplied MakeMoveTests and three ChessGameTests pass.
 
-Progress: 6 of 10 Phase 1 commits on main. Next: implement checkmate, then
-stalemate, and activate the remaining core Phase 1 tests. Castling and en passant
-remain for the last two planned commits. Later phases remain at their starter
-state. Phase 1 is not complete or submitted yet.
+Day 4, commit 7: checkmate requires check and no legal move from any piece on
+the requested team. A shared hasLegalMove helper checks the team's pieces and
+stops when it finds an escape. Tests cover both teams, independence from turn,
+unchanged game state, and escapes by another piece's capture or block.
+
+Validation: `mvn -pl shared test` with Java 21 passed all 131 active tests.
+
+Progress: 7 of 10 Phase 1 commits on main. Next: implement stalemate and activate
+the remaining core Phase 1 tests. Castling and en passant remain for the last
+two planned commits. Later phases remain at their starter state.
