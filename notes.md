@@ -122,6 +122,17 @@ unchanged game state, and escapes by another piece's capture or block.
 
 Validation: `mvn -pl shared test` with Java 21 passed all 131 active tests.
 
-Progress: 7 of 10 Phase 1 commits on main. Next: implement stalemate and activate
-the remaining core Phase 1 tests. Castling and en passant remain for the last
-two planned commits. Later phases remain at their starter state.
+Day 4, commit 8: stalemate requires no check and no legal moves from any piece
+on the requested team, reusing hasLegalMove. Activated the supplied GameStatusTests
+and FullGameTest unchanged. Additional tests distinguish mate from stalemate,
+check both colors and turns, preserve board state, and confirm that another
+piece's legal move prevents stalemate even when the king cannot move.
+
+Validation: `mvn clean verify` with Java 21 passed all 147 active tests and built
+all three modules. All five supplied core Phase 1 test files are now active and
+match their starter copies exactly (43 core Phase 1 test cases total).
+
+Progress: 8 of 10 Phase 1 commits on main. Next: castling, then en passant, with
+the supplied extra-credit tests and regression checks. Core Phase 1 behavior
+passes its provided tests; the extra-credit rules are not implemented yet.
+Later phases remain at their starter state. No grading submission made yet.
