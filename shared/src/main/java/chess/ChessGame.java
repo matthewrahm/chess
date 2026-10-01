@@ -67,6 +67,8 @@ public class ChessGame {
         }
         Collection<ChessMove> moves = new ArrayList<>();
         for (ChessMove move : candidates) {
+            ChessPiece target = board.getPiece(move.getEndPosition());
+            if (target != null && target.getPieceType() == ChessPiece.PieceType.KING) continue;
             ChessBoard nextBoard = simulateMove(move);
             if (!isInCheck(nextBoard, piece.getTeamColor())) {
                 moves.add(move);

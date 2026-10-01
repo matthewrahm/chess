@@ -153,7 +153,17 @@ en passant, are active and unchanged from the starter copies. Additional tests
 cover discovered checks, escaping pawn check, eligibility expiration, and state
 preservation. No unimplemented shared chess methods remain.
 
-Progress: 10 of 10 planned Phase 1 commits on main. Core rules and both extra-credit
-moves are implemented and pass local checks. Later phases remain at their
-starter state. No grading submission made yet; the next step is to submit the
-current GitHub revision through the course autograder and review its result.
+Final review, commit 11: reject moves that capture the opposing king. Custom
+board positions previously allowed this because simulating the capture removed
+the king before the safety check. validMoves now excludes king captures while
+isInCheck still uses pieceMoves to detect attacks. Two regression tests cover
+all six piece types for both colors and verify rejected moves preserve state.
+Both tests failed before the fix and pass afterward.
+
+Validation: `mvn clean verify` with Java 21 passed all 171 active tests and built
+all three modules, including all supplied core and extra-credit Phase 1 tests.
+
+Progress: all 10 planned commits plus one final correctness fix (11 Phase 1
+commits total). Later phases remain at their starter state. No grading submission
+made yet; submit the current GitHub revision through the course autograder and
+review its result.
