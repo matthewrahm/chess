@@ -132,7 +132,14 @@ Validation: `mvn clean verify` with Java 21 passed all 147 active tests and buil
 all three modules. All five supplied core Phase 1 test files are now active and
 match their starter copies exactly (43 core Phase 1 test cases total).
 
-Progress: 8 of 10 Phase 1 commits on main. Next: castling, then en passant, with
-the supplied extra-credit tests and regression checks. Core Phase 1 behavior
-passes its provided tests; the extra-credit rules are not implemented yet.
+Day 5, commit 9: castling checks the king and rook's remaining rights, clear
+squares, and king safety before, during, and after the move. Execution moves both
+pieces. Moving a king or moving/capturing a corner rook removes the appropriate
+rights; queries and rejected moves preserve them. Game equality includes these
+rights, and setBoard starts a fresh position with reset rights.
+
+Validation: `mvn -pl shared test` with Java 21 passed all 159 active tests,
+including all seven supplied CastlingTests and five additional edge-case tests.
+
+Progress: 9 of 10 Phase 1 commits on main. Next: en passant, then full validation.
 Later phases remain at their starter state. No grading submission made yet.
