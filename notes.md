@@ -141,5 +141,19 @@ rights, and setBoard starts a fresh position with reset rights.
 Validation: `mvn -pl shared test` with Java 21 passed all 159 active tests,
 including all seven supplied CastlingTests and five additional edge-case tests.
 
-Progress: 9 of 10 Phase 1 commits on main. Next: en passant, then full validation.
-Later phases remain at their starter state. No grading submission made yet.
+Day 5, commit 10: en passant is available only after an adjacent opposing pawn's
+double move and expires on the next accepted move. Simulation and execution
+remove the captured pawn from its actual square, so king safety accounts for
+both vacated squares. Queries and rejected moves preserve eligibility; setBoard
+clears it. Equality includes the en passant state.
+
+Validation: `mvn clean verify` with Java 21 passed all 169 active tests and built
+all three modules. All seven supplied Phase 1 test files, including castling and
+en passant, are active and unchanged from the starter copies. Additional tests
+cover discovered checks, escaping pawn check, eligibility expiration, and state
+preservation. No unimplemented shared chess methods remain.
+
+Progress: 10 of 10 planned Phase 1 commits on main. Core rules and both extra-credit
+moves are implemented and pass local checks. Later phases remain at their
+starter state. No grading submission made yet; the next step is to submit the
+current GitHub revision through the course autograder and review its result.

@@ -15,6 +15,7 @@ public class ChessGame {
 
     private ChessBoard board;
     private TeamColor teamTurn;
+    private ChessPosition enPassantPawn;
     private boolean[][] castlingRights = {{true, true}, {true, true}};
 
     public ChessGame() {
@@ -61,6 +62,8 @@ public class ChessGame {
         Collection<ChessMove> candidates = new ArrayList<>(piece.pieceMoves(board, startPosition));
         if (piece.getPieceType() == ChessPiece.PieceType.KING) {
             addCastlingMoves(startPosition, piece.getTeamColor(), candidates);
+        } else if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
+            addEnPassantMove(startPosition, piece.getTeamColor(), candidates);
         }
         Collection<ChessMove> moves = new ArrayList<>();
         for (ChessMove move : candidates) {
@@ -94,6 +97,11 @@ public class ChessGame {
         }
         updateCastlingRights(move, piece);
         applyMove(board, move);
+        enPassantPawn = null;
+        if (piece.getPieceType() == ChessPiece.PieceType.PAWN
+                && Math.abs(move.getEndPosition().getRow() - move.getStartPosition().getRow()) == 2) {
+            enPassantPawn = move.getEndPosition();
+        }
         teamTurn = teamTurn == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE;
     }
 
@@ -172,6 +180,7 @@ public class ChessGame {
      */
     public void setBoard(ChessBoard board) {
         this.board = board;
+        enPassantPawn = null;
         castlingRights = new boolean[][]{{true, true}, {true, true}};
     }
 
@@ -193,6 +202,12 @@ public class ChessGame {
     private void applyMove(ChessBoard targetBoard, ChessMove move) {
         ChessPiece piece = targetBoard.getPiece(move.getStartPosition());
         targetBoard.addPiece(move.getStartPosition(), null);
+        if (piece.getPieceType() == ChessPiece.PieceType.PAWN
+                && move.getStartPosition().getColumn() != move.getEndPosition().getColumn()
+                && targetBoard.getPiece(move.getEndPosition()) == null) {
+            targetBoard.addPiece(new ChessPosition(move.getStartPosition().getRow(),
+                    move.getEndPosition().getColumn()), null);
+        }
         if (piece.getPieceType() == ChessPiece.PieceType.KING
                 && Math.abs(move.getEndPosition().getColumn() - move.getStartPosition().getColumn()) == 2) {
             int row = move.getStartPosition().getRow();
@@ -206,6 +221,21 @@ public class ChessGame {
             piece = new ChessPiece(piece.getTeamColor(), move.getPromotionPiece());
         }
         targetBoard.addPiece(move.getEndPosition(), piece);
+    }
+
+    private void addEnPassantMove(ChessPosition start, TeamColor color, Collection<ChessMove> moves) {
+        int captureRow = color == TeamColor.WHITE ? 5 : 4;
+        if (enPassantPawn == null || start.getRow() != captureRow
+                || enPassantPawn.getRow() != start.getRow()
+                || Math.abs(enPassantPawn.getColumn() - start.getColumn()) != 1) return;
+        ChessPiece pawn = board.getPiece(enPassantPawn);
+        if (pawn == null || pawn.getPieceType() != ChessPiece.PieceType.PAWN
+                || pawn.getTeamColor() == color) return;
+        int direction = color == TeamColor.WHITE ? 1 : -1;
+        ChessPosition end = new ChessPosition(start.getRow() + direction, enPassantPawn.getColumn());
+        if (board.getPiece(end) == null) {
+            moves.add(new ChessMove(start, end, null));
+        }
     }
 
     private void addCastlingMoves(ChessPosition start, TeamColor color, Collection<ChessMove> moves) {
@@ -269,11 +299,12 @@ public class ChessGame {
         if (o == null || getClass() != o.getClass()) return false;
         ChessGame that = (ChessGame) o;
         return teamTurn == that.teamTurn && Objects.equals(board, that.board)
-                && Arrays.deepEquals(castlingRights, that.castlingRights);
+                && Arrays.deepEquals(castlingRights, that.castlingRights)
+                && Objects.equals(enPassantPawn, that.enPassantPawn);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(board, teamTurn, Arrays.deepHashCode(castlingRights));
+        return Objects.hash(board, teamTurn, Arrays.deepHashCode(castlingRights), enPassantPawn);
     }
 }
