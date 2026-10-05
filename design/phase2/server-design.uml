@@ -105,3 +105,43 @@ Service --> Handler: propagate DataAccessException
 Handler --> Server: 500 {"message":"Error: internal server error"}
 Server --> Client: 500 {"message":"Error: internal server error"}
 end
+
+group #green Logout #white
+Client -> Server: DELETE /session\nauthorization: authToken
+Server -> Handler: logoutHandler(context)
+Handler -> Handler: read authorization header into LogoutRequest(authToken)
+Handler -> Service: logout(LogoutRequest)
+break authorization token is missing or empty
+Service --> Handler: throw UnauthorizedException
+Handler --> Server: 401 {"message":"Error: unauthorized"}
+Server --> Client: 401 {"message":"Error: unauthorized"}
+end
+Service -> DataAccess: getAuth(authToken)
+DataAccess -> Database: find authorization by authToken
+Database --> DataAccess: AuthData or null
+DataAccess --> Service: AuthData or null
+break AuthData is null
+Service --> Handler: throw UnauthorizedException
+Handler --> Server: 401 {"message":"Error: unauthorized"}
+Server --> Client: 401 {"message":"Error: unauthorized"}
+end
+Service -> DataAccess: deleteAuth(authToken)
+DataAccess -> Database: remove only the matching authorization
+Database --> DataAccess: deleted
+DataAccess --> Service: return
+note over Service,Database: Preserve users, games, and all other sessions.
+Service --> Handler: return
+Handler -> Handler: create empty JSON response {}
+Handler --> Server: 200 {}
+Server --> Client: 200 {}
+end
+
+// Alternative termination of Logout if either data access operation fails.
+group #gray Logout storage error #white
+note over Service,Database: During getAuth or deleteAuth above; stop the normal flow.
+Database --> DataAccess: storage failure
+DataAccess --> Service: throw DataAccessException
+Service --> Handler: propagate DataAccessException
+Handler --> Server: 500 {"message":"Error: internal server error"}
+Server --> Client: 500 {"message":"Error: internal server error"}
+end

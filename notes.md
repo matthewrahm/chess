@@ -218,3 +218,17 @@ updated presentation link round-trips to the exact combined source. No runtime
 code changed, so Maven tests were not rerun for this diagram-only work.
 Progress: 2 of 9 planned Phase 2 commits. Next: Logout and Clear designs.
 The diagram is incomplete and has not been submitted to Canvas.
+
+Day 2, commit 3 (October 5): designed Logout. The handler reads the authorization
+header into LogoutRequest(authToken), and the service rejects missing or unknown
+tokens before deleting only that token. Users, games, and other sessions remain.
+Success returns 200 with {}; authorization failures return 401, and storage
+failures propagate through the service to a 500 response. Proposed interfaces:
+void logout(LogoutRequest), AuthData getAuth(String authToken), and
+void deleteAuth(String authToken); data access may throw DataAccessException.
+
+Validation: rechecked the current course Logout contract, diagram group balance,
+participant references, lookup-before-delete ordering, and exact presentation-link
+round-trip. No Java code changed; Maven was not rerun. Browser rendering remains
+unverified. Branch: main. Progress: 3 of 9 Phase 2 commits, with one commit today
+as requested. Next: Clear. The full diagram is still in progress, not submitted.
