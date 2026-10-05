@@ -202,3 +202,19 @@ Validation: compared the Register flow to the published API and starter example;
 checked the presentation link decompresses exactly to the saved UML source.
 Browser automation is unavailable, so in-browser rendering remains to be checked.
 No Java source or earlier-phase behavior changed. Working branch: `main`.
+
+Day 1, commit 2: designed Login with request validation, a user lookup, safe
+handling of a missing user before password verification, and a fresh stored
+AuthData for every successful login. Unknown users and wrong passwords both
+produce 401; missing fields or malformed JSON produce 400. Storage errors
+propagate to the handler and become 500 responses. Existing sessions remain.
+LoginRequest and LoginResult each carry two strings: username/password and
+username/authToken respectively. Password verification belongs in the service;
+passwords and hashes are absent from the response.
+
+Validation: reviewed both endpoints against the Phase 3 request/response and
+error contracts. UML group boundaries and participant references checked;
+updated presentation link round-trips to the exact combined source. No runtime
+code changed, so Maven tests were not rerun for this diagram-only work.
+Progress: 2 of 9 planned Phase 2 commits. Next: Logout and Clear designs.
+The diagram is incomplete and has not been submitted to Canvas.

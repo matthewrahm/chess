@@ -55,3 +55,53 @@ Service --> Handler: propagate DataAccessException
 Handler --> Server: 500 {"message":"Error: internal server error"}
 Server --> Client: 500 {"message":"Error: internal server error"}
 end
+
+group #orange Login #white
+Client -> Server: POST /session\n{username, password}
+Server -> Handler: loginHandler(context)
+Handler -> Handler: deserialize JSON into LoginRequest
+break malformed JSON
+Handler --> Server: 400 {"message":"Error: bad request"}
+Server --> Client: 400 {"message":"Error: bad request"}
+end
+Handler -> Service: login(LoginRequest)
+break missing username or password
+Service --> Handler: throw BadRequestException
+Handler --> Server: 400 {"message":"Error: bad request"}
+Server --> Client: 400 {"message":"Error: bad request"}
+end
+Service -> DataAccess: getUser(username)
+DataAccess -> Database: find user by username
+Database --> DataAccess: UserData or null
+DataAccess --> Service: UserData or null
+break UserData is null
+Service --> Handler: throw UnauthorizedException
+Handler --> Server: 401 {"message":"Error: unauthorized"}
+Server --> Client: 401 {"message":"Error: unauthorized"}
+end
+Service -> Service: passwordMatches(password, user.password)
+break password does not match the stored hash
+Service --> Handler: throw UnauthorizedException
+Handler --> Server: 401 {"message":"Error: unauthorized"}
+Server --> Client: 401 {"message":"Error: unauthorized"}
+end
+Service -> Service: generateToken() using UUID.randomUUID()
+Service -> DataAccess: createAuth(AuthData(authToken, username))
+DataAccess -> Database: store new AuthData; preserve other sessions
+Database --> DataAccess: stored
+DataAccess --> Service: return
+Service --> Handler: LoginResult(username, authToken)
+Handler -> Handler: serialize result to JSON
+Handler --> Server: 200 {username, authToken}
+Server --> Client: 200 {username, authToken}
+end
+
+// Alternative termination of Login if any data access operation fails.
+group #gray Login storage error #white
+note over Service,Database: During any database operation above; stop the normal flow.
+Database --> DataAccess: storage failure
+DataAccess --> Service: throw DataAccessException
+Service --> Handler: propagate DataAccessException
+Handler --> Server: 500 {"message":"Error: internal server error"}
+Server --> Client: 500 {"message":"Error: internal server error"}
+end
