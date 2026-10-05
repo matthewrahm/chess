@@ -1,0 +1,57 @@
+title Chess Server Design - Matthew Rahm
+actor Client
+participant Server
+participant Handler
+participant Service
+participant DataAccess
+database Database
+
+// Proposed interactions for Phase 3; database operations describe the storage contract.
+group #navy Register #white
+Client -> Server: POST /user\n{username, password, email}
+Server -> Handler: registerHandler(context)
+Handler -> Handler: deserialize JSON into RegisterRequest
+break malformed JSON
+Handler --> Server: 400 {"message":"Error: bad request"}
+Server --> Client: 400 {"message":"Error: bad request"}
+end
+Handler -> Service: register(RegisterRequest)
+break missing username, password, or email
+Service --> Handler: throw BadRequestException
+Handler --> Server: 400 {"message":"Error: bad request"}
+Server --> Client: 400 {"message":"Error: bad request"}
+end
+Service -> DataAccess: getUser(username)
+DataAccess -> Database: find user by username
+Database --> DataAccess: UserData or null
+DataAccess --> Service: UserData or null
+break UserData is not null
+Service --> Handler: throw AlreadyTakenException
+Handler --> Server: 403 {"message":"Error: already taken"}
+Server --> Client: 403 {"message":"Error: already taken"}
+end
+Service -> Service: hashPassword(password)
+Service -> DataAccess: createUser(UserData(username, passwordHash, email))
+DataAccess -> Database: store UserData
+Database --> DataAccess: stored
+DataAccess --> Service: return
+Service -> Service: generateToken() using UUID.randomUUID()
+Service -> DataAccess: createAuth(AuthData(authToken, username))
+DataAccess -> Database: store AuthData
+Database --> DataAccess: stored
+DataAccess --> Service: return
+Service --> Handler: RegisterResult(username, authToken)
+Handler -> Handler: serialize result to JSON
+Handler --> Server: 200 {username, authToken}
+Server --> Client: 200 {username, authToken}
+end
+
+// Alternative termination of Register if any data access operation fails.
+group #gray Register storage error #white
+note over Service,Database: During any database operation above; stop the normal flow.
+Database --> DataAccess: storage failure
+DataAccess --> Service: throw DataAccessException
+Service --> Handler: propagate DataAccessException
+Handler --> Server: 500 {"message":"Error: internal server error"}
+Server --> Client: 500 {"message":"Error: internal server error"}
+end

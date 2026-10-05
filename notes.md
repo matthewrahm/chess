@@ -167,3 +167,38 @@ Progress: all 10 planned commits plus one final correctness fix (11 Phase 1
 commits total). Later phases remain at their starter state. No grading submission
 made yet; submit the current GitHub revision through the course autograder and
 review its result.
+
+## Phase 2 plan and progress
+
+Phase 2 is server design, with no starter code or Java implementation required.
+The deliverable is a SequenceDiagram.org presentation link covering seven
+endpoints. The README links to the current diagram; its editable source is
+`design/phase2/server-design.uml`. Phase 3 implements these proposed interactions.
+
+Instructions: https://github.com/softwareconstruction240/softwareconstruction/blob/main/chess/2-server-design/server-design.md
+API contract: https://github.com/softwareconstruction240/softwareconstruction/blob/main/chess/3-web-api/web-api.md
+The course manifest maps the supplied MasteryLS topic ID to this Phase 2 page.
+
+Nine planned commits, two per workday and one on the final day:
+1. Register: layered request flow, username availability, user/token creation.
+2. Login: credential verification and creation of a fresh session.
+3. Logout: token lookup and removal of the requested session only.
+4. Clear: remove users, games, and authorization data.
+5. List games: authorize the caller and return the public game list.
+6. Create game: authorize, initialize, persist, and return the game ID.
+7. Join game: authorize, validate the requested seat, and update the game.
+8. Review error propagation and align the shared method/model contracts.
+9. Review all seven flows together and finalize the presentation link for submission.
+
+Day 1, commit 1: designed Register using the course's six lifelines. The handler
+owns JSON and HTTP; the service validates input, checks username availability,
+and creates a user and fresh authorization; data access owns storage calls.
+The diagram includes 400/403 outcomes and an alternative 500 propagation flow.
+`UserData.password` stores the password hash; `AuthData` carries authToken and
+username. RegisterRequest has username/password/email strings; RegisterResult
+has username/authToken strings. These interfaces are proposed, not implemented.
+
+Validation: compared the Register flow to the published API and starter example;
+checked the presentation link decompresses exactly to the saved UML source.
+Browser automation is unavailable, so in-browser rendering remains to be checked.
+No Java source or earlier-phase behavior changed. Working branch: `main`.
