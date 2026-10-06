@@ -145,3 +145,32 @@ Service --> Handler: propagate DataAccessException
 Handler --> Server: 500 {"message":"Error: internal server error"}
 Server --> Client: 500 {"message":"Error: internal server error"}
 end
+
+group #gray Clear application #white
+Client -> Server: DELETE /db
+Server -> Handler: clearHandler(context)
+Handler -> Service: clear()
+Service -> DataAccess: clear()
+DataAccess -> Database: remove all authorizations
+Database --> DataAccess: removed
+DataAccess -> Database: remove all games
+Database --> DataAccess: removed
+DataAccess -> Database: remove all users
+Database --> DataAccess: removed
+DataAccess --> Service: return
+Service --> Handler: return
+Handler -> Handler: create empty JSON response {}
+Handler --> Server: 200 {}
+Server --> Client: 200 {}
+note over Client,Database: No authorization header or request body is required.\nAn already-empty store also succeeds.
+end
+
+// Alternative termination of Clear if any removal fails.
+group #gray Clear storage error #white
+note over Service,Database: During clear() above; stop the normal flow.
+Database --> DataAccess: storage failure
+DataAccess --> Service: throw DataAccessException
+Service --> Handler: propagate DataAccessException
+Handler --> Server: 500 {"message":"Error: internal server error"}
+Server --> Client: 500 {"message":"Error: internal server error"}
+end

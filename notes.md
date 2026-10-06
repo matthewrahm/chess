@@ -232,3 +232,15 @@ participant references, lookup-before-delete ordering, and exact presentation-li
 round-trip. No Java code changed; Maven was not rerun. Browser rendering remains
 unverified. Branch: main. Progress: 3 of 9 Phase 2 commits, with one commit today
 as requested. Next: Clear. The full diagram is still in progress, not submitted.
+
+Day 3, commit 4 (October 6): designed Clear application, DELETE /db. The handler
+calls the service's clear(), which delegates to DataAccess.clear(). Storage
+removes all authorizations, games, and users before returning success. No token
+or body is required, and clearing an empty store succeeds. The handler returns
+200 with {}; DataAccessException propagates through the service and becomes 500.
+Proposed interfaces: void Service.clear() and void DataAccess.clear(), with the
+latter allowed to throw DataAccessException. No Java implementation added.
+
+Validation: checked all three data categories, the no-auth contract, empty-store
+behavior, and 200/500 responses against the current course API. Presentation-link
+round-trip and whitespace checks passed. Progress: 4 of 9 Phase 2 commits.
