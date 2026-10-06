@@ -244,3 +244,25 @@ latter allowed to throw DataAccessException. No Java implementation added.
 Validation: checked all three data categories, the no-auth contract, empty-store
 behavior, and 200/500 responses against the current course API. Presentation-link
 round-trip and whitespace checks passed. Progress: 4 of 9 Phase 2 commits.
+
+Day 3, commit 5 (October 6): designed List Games, GET /game. The handler reads
+an authorization header; the service validates it before reading any games.
+The service projects GameData into GameSummary(gameID, whiteUsername,
+blackUsername, gameName), excluding ChessGame state. The response is 200 with a
+games array, including [] for an empty store and null for unoccupied seats.
+All games are listed, regardless of the caller, without modifying stored data.
+Invalid authorization produces 401; storage failures propagate to a 500 response.
+
+Proposed interfaces: ListGamesResult listGames(ListGamesRequest),
+AuthData getAuth(String authToken), and Collection<GameData> listGames().
+ListGamesRequest carries a String authToken; ListGamesResult carries a collection
+of GameSummary values with an int gameID and three String fields (the two player
+names are nullable). The shared API specification remains the contract reference.
+
+Validation: reviewed authorization-before-read ordering, exact response field
+names, empty lists, nullable players, no state mutation, and 401/500 propagation.
+Checked all diagram group boundaries and participant references and verified the
+README presentation link decompresses to the complete saved source. No Java
+changes; Maven was not rerun. Browser rendering remains unverified.
+Progress: 5 of 9 Phase 2 commits on main. Next: Create Game and Join Game.
+The full diagram is still in progress and has not been submitted to Canvas.

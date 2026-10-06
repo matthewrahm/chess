@@ -174,3 +174,45 @@ Service --> Handler: propagate DataAccessException
 Handler --> Server: 500 {"message":"Error: internal server error"}
 Server --> Client: 500 {"message":"Error: internal server error"}
 end
+
+group #red List Games #white
+Client -> Server: GET /game\nauthorization: authToken
+Server -> Handler: listGamesHandler(context)
+Handler -> Handler: read authorization header into ListGamesRequest(authToken)
+Handler -> Service: listGames(ListGamesRequest)
+break authorization token is missing or empty
+Service --> Handler: throw UnauthorizedException
+Handler --> Server: 401 {"message":"Error: unauthorized"}
+Server --> Client: 401 {"message":"Error: unauthorized"}
+end
+Service -> DataAccess: getAuth(authToken)
+DataAccess -> Database: find authorization by authToken
+Database --> DataAccess: AuthData or null
+DataAccess --> Service: AuthData or null
+break AuthData is null
+Service --> Handler: throw UnauthorizedException
+Handler --> Server: 401 {"message":"Error: unauthorized"}
+Server --> Client: 401 {"message":"Error: unauthorized"}
+end
+Service -> DataAccess: listGames()
+DataAccess -> Database: retrieve all games
+Database --> DataAccess: collection of GameData (possibly empty)
+DataAccess --> Service: collection of GameData
+Service -> Service: map each GameData to GameSummary\n(gameID, whiteUsername, blackUsername, gameName)
+Service --> Handler: ListGamesResult(games)
+Handler -> Handler: serialize result to JSON; include null player names
+Handler --> Server: 200 {"games":[{gameID, whiteUsername, blackUsername, gameName}, ...]}
+Server --> Client: 200 {"games":[{gameID, whiteUsername, blackUsername, gameName}, ...]}
+note over Service,Database: Return all games, not just the caller's games.\nDo not modify games or sessions; omit the ChessGame state from the response.
+note over Client,Handler: Empty store: 200 {"games":[]}\nUnoccupied seats: whiteUsername or blackUsername is null.
+end
+
+// Alternative termination of List Games if either data access operation fails.
+group #gray List Games storage error #white
+note over Service,Database: During getAuth or listGames above; stop the normal flow.
+Database --> DataAccess: storage failure
+DataAccess --> Service: throw DataAccessException
+Service --> Handler: propagate DataAccessException
+Handler --> Server: 500 {"message":"Error: internal server error"}
+Server --> Client: 500 {"message":"Error: internal server error"}
+end
