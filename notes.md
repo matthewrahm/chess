@@ -266,3 +266,18 @@ README presentation link decompresses to the complete saved source. No Java
 changes; Maven was not rerun. Browser rendering remains unverified.
 Progress: 5 of 9 Phase 2 commits on main. Next: Create Game and Join Game.
 The full diagram is still in progress and has not been submitted to Canvas.
+
+Day 4, commit 6 (October 7): designed Create Game, POST /game. The handler combines
+an authorization header and JSON gameName into CreateGameRequest. The service
+validates the token and required gameName, initializes ChessGame, and asks data
+access to store a new GameData with a unique ID and two empty player seats.
+Success returns 200 with gameID only. Creating a game does not automatically
+join the caller. Invalid input, authorization, and storage map to 400/401/500.
+Proposed interfaces: CreateGameResult createGame(CreateGameRequest) and
+int DataAccess.createGame(String gameName, ChessGame game). The request contains
+String authToken/gameName; the result contains int gameID.
+
+Validation: checked the current Create Game API, authorization-before-creation,
+initial board/turn, null player names, unique ID, and response/error contracts.
+Presentation-link round-trip and whitespace checks passed. No Java code changed.
+Progress: 6 of 9 Phase 2 commits on main. Next: Join Game.

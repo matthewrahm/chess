@@ -216,3 +216,53 @@ Service --> Handler: propagate DataAccessException
 Handler --> Server: 500 {"message":"Error: internal server error"}
 Server --> Client: 500 {"message":"Error: internal server error"}
 end
+
+group #purple Create Game #white
+Client -> Server: POST /game\nauthorization: authToken\n{gameName}
+Server -> Handler: createGameHandler(context)
+Handler -> Handler: read authorization header and deserialize JSON\ninto CreateGameRequest(authToken, gameName)
+break malformed JSON
+Handler --> Server: 400 {"message":"Error: bad request"}
+Server --> Client: 400 {"message":"Error: bad request"}
+end
+Handler -> Service: createGame(CreateGameRequest)
+break authorization token is missing or empty
+Service --> Handler: throw UnauthorizedException
+Handler --> Server: 401 {"message":"Error: unauthorized"}
+Server --> Client: 401 {"message":"Error: unauthorized"}
+end
+Service -> DataAccess: getAuth(authToken)
+DataAccess -> Database: find authorization by authToken
+Database --> DataAccess: AuthData or null
+DataAccess --> Service: AuthData or null
+break AuthData is null
+Service --> Handler: throw UnauthorizedException
+Handler --> Server: 401 {"message":"Error: unauthorized"}
+Server --> Client: 401 {"message":"Error: unauthorized"}
+end
+break gameName is missing or null
+Service --> Handler: throw BadRequestException
+Handler --> Server: 400 {"message":"Error: bad request"}
+Server --> Client: 400 {"message":"Error: bad request"}
+end
+Service -> Service: game = new ChessGame()\nstandard starting board; White moves first
+Service -> DataAccess: createGame(gameName, game)
+DataAccess -> Database: store new GameData with a unique gameID\n(gameID, null, null, gameName, game)
+Database --> DataAccess: assigned gameID
+DataAccess --> Service: gameID
+Service --> Handler: CreateGameResult(gameID)
+Handler -> Handler: serialize result to JSON
+Handler --> Server: 200 {gameID}
+Server --> Client: 200 {gameID}
+note over Service,Database: Creating a game does not join the creator to either seat.\nBoth player names start as null; existing games remain unchanged.
+end
+
+// Alternative termination of Create Game if either data access operation fails.
+group #gray Create Game storage error #white
+note over Service,Database: During getAuth or createGame above; stop the normal flow.
+Database --> DataAccess: storage failure
+DataAccess --> Service: throw DataAccessException
+Service --> Handler: propagate DataAccessException
+Handler --> Server: 500 {"message":"Error: internal server error"}
+Server --> Client: 500 {"message":"Error: internal server error"}
+end
