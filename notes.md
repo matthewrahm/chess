@@ -281,3 +281,26 @@ Validation: checked the current Create Game API, authorization-before-creation,
 initial board/turn, null player names, unique ID, and response/error contracts.
 Presentation-link round-trip and whitespace checks passed. No Java code changed.
 Progress: 6 of 9 Phase 2 commits on main. Next: Join Game.
+
+Day 4, commit 7 (October 7): designed Join Game, PUT /game. The service resolves
+the caller from AuthData, validates the requested color and game ID, loads the
+game, and rejects an occupied seat before updating it. WHITE and BLACK have
+separate branches. The update preserves the other player, game name, ChessGame
+board, and turn. The client cannot supply a replacement username. Successful
+requests return 200 with {}; errors cover 400/401/403/500. Joining both different
+seats with the same account remains possible, as the supplied API tests require.
+
+Proposed interfaces: void joinGame(JoinGameRequest), GameData getGame(int gameID),
+and void updateGame(GameData game). JoinGameRequest contains String authToken,
+String playerColor, and Integer gameID so missing IDs can be distinguished from
+present values. Data access may throw DataAccessException. These are design
+contracts for Phase 3, not implemented Java APIs.
+
+Validation: compared Create/Join to the current course API and supplied Phase 3
+passoff scenarios (read only). Checked authorization-before-game-access,
+existence/seat checks before mutation, both color branches, field preservation,
+all seven endpoint flows' group balance/participant references, and the exact
+README presentation-link round-trip. No Java changes; Maven was not rerun.
+Browser rendering remains unverified. Progress: 7 of 9 Phase 2 commits on main.
+Next: review shared contracts/error propagation, then finalize and visually
+verify the complete presentation. No Canvas submission has been made.
