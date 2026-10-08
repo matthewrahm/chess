@@ -317,3 +317,23 @@ Validation: refreshed and reviewed the official Phase 2 and Phase 3 specs;
 SequenceDiagram.org's own JavaScript renderer parsed the diagram with zero
 syntax errors and produced a PNG through its backend export API. README link
 round-trip passed. Visual layout review is next. Progress: 8 of 9 commits.
+
+Final presentation, commit 9 (October 8): replaced dark group fills with light
+colors so black labels and arrows remain readable, wrapped long request/result
+labels, and moved Create/Join null-request checks before request-field access.
+README now links the completed presentation, editable source, and proposed
+contracts, with the Canvas submission step. All seven endpoint designs are done.
+
+Validation: rendered the complete source using SequenceDiagram.org's own backend
+renderer with zero syntax errors; visually inspected all seven endpoint sections
+and their error alternatives. Fixed the canvas adapter to honor export dimensions
+before visual inspection. Regenerated the presentation link and verified it
+decodes to the exact final source. Java 21 `mvn -B clean verify` succeeded across
+all modules: 171 tests, zero failures/errors/skips. `git diff --check` passed.
+No Java implementation changed; these tests verify the existing chess code, not
+a Phase 3 server implementation. Browser UI access remains unavailable; diagram
+rendering was verified through the tool's backend API instead.
+
+Handoff: main; Phase 2 design complete at 9 of 9 planned commits. Next step:
+submit the README presentation URL to Canvas and review any TA feedback.
+No Canvas submission has been made. Phase 3 implementation has not started.
