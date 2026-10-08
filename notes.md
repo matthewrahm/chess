@@ -304,3 +304,16 @@ README presentation-link round-trip. No Java changes; Maven was not rerun.
 Browser rendering remains unverified. Progress: 7 of 9 Phase 2 commits on main.
 Next: review shared contracts/error propagation, then finalize and visually
 verify the complete presentation. No Canvas submission has been made.
+
+Final review, commit 8 (October 8): aligned the sequence diagram's proposed
+interfaces in `design/phase2/contracts.md`. Named lookup results (user/auth/game)
+and generated passwordHash/authToken values explicitly, and clarified null
+requests and malformed/wrong-type JSON handling. The contract records the exact
+seven endpoint status sets, model fields, nullable seats, unique IDs, session
+preservation, and separation between HTTP handling, service logic, and storage.
+It also distinguishes Phase 3 memory storage from the later SQL implementation.
+
+Validation: refreshed and reviewed the official Phase 2 and Phase 3 specs;
+SequenceDiagram.org's own JavaScript renderer parsed the diagram with zero
+syntax errors and produced a PNG through its backend export API. README link
+round-trip passed. Visual layout review is next. Progress: 8 of 9 commits.

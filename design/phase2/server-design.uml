@@ -11,12 +11,12 @@ group #navy Register #white
 Client -> Server: POST /user\n{username, password, email}
 Server -> Handler: registerHandler(context)
 Handler -> Handler: deserialize JSON into RegisterRequest
-break malformed JSON
+break malformed JSON or incompatible field types
 Handler --> Server: 400 {"message":"Error: bad request"}
 Server --> Client: 400 {"message":"Error: bad request"}
 end
 Handler -> Service: register(RegisterRequest)
-break missing username, password, or email
+break request is null or username, password, or email is missing/null
 Service --> Handler: throw BadRequestException
 Handler --> Server: 400 {"message":"Error: bad request"}
 Server --> Client: 400 {"message":"Error: bad request"}
@@ -24,18 +24,18 @@ end
 Service -> DataAccess: getUser(username)
 DataAccess -> Database: find user by username
 Database --> DataAccess: UserData or null
-DataAccess --> Service: UserData or null
-break UserData is not null
+DataAccess --> Service: user = UserData or null
+break user is not null
 Service --> Handler: throw AlreadyTakenException
 Handler --> Server: 403 {"message":"Error: already taken"}
 Server --> Client: 403 {"message":"Error: already taken"}
 end
-Service -> Service: hashPassword(password)
+Service -> Service: passwordHash = hashPassword(password)
 Service -> DataAccess: createUser(UserData(username, passwordHash, email))
 DataAccess -> Database: store UserData
 Database --> DataAccess: stored
 DataAccess --> Service: return
-Service -> Service: generateToken() using UUID.randomUUID()
+Service -> Service: authToken = generateToken()\nusing UUID.randomUUID()
 Service -> DataAccess: createAuth(AuthData(authToken, username))
 DataAccess -> Database: store AuthData
 Database --> DataAccess: stored
@@ -60,12 +60,12 @@ group #orange Login #white
 Client -> Server: POST /session\n{username, password}
 Server -> Handler: loginHandler(context)
 Handler -> Handler: deserialize JSON into LoginRequest
-break malformed JSON
+break malformed JSON or incompatible field types
 Handler --> Server: 400 {"message":"Error: bad request"}
 Server --> Client: 400 {"message":"Error: bad request"}
 end
 Handler -> Service: login(LoginRequest)
-break missing username or password
+break request is null or username or password is missing/null
 Service --> Handler: throw BadRequestException
 Handler --> Server: 400 {"message":"Error: bad request"}
 Server --> Client: 400 {"message":"Error: bad request"}
@@ -73,8 +73,8 @@ end
 Service -> DataAccess: getUser(username)
 DataAccess -> Database: find user by username
 Database --> DataAccess: UserData or null
-DataAccess --> Service: UserData or null
-break UserData is null
+DataAccess --> Service: user = UserData or null
+break user is null
 Service --> Handler: throw UnauthorizedException
 Handler --> Server: 401 {"message":"Error: unauthorized"}
 Server --> Client: 401 {"message":"Error: unauthorized"}
@@ -85,7 +85,7 @@ Service --> Handler: throw UnauthorizedException
 Handler --> Server: 401 {"message":"Error: unauthorized"}
 Server --> Client: 401 {"message":"Error: unauthorized"}
 end
-Service -> Service: generateToken() using UUID.randomUUID()
+Service -> Service: authToken = generateToken()\nusing UUID.randomUUID()
 Service -> DataAccess: createAuth(AuthData(authToken, username))
 DataAccess -> Database: store new AuthData; preserve other sessions
 Database --> DataAccess: stored
@@ -119,8 +119,8 @@ end
 Service -> DataAccess: getAuth(authToken)
 DataAccess -> Database: find authorization by authToken
 Database --> DataAccess: AuthData or null
-DataAccess --> Service: AuthData or null
-break AuthData is null
+DataAccess --> Service: auth = AuthData or null
+break auth is null
 Service --> Handler: throw UnauthorizedException
 Handler --> Server: 401 {"message":"Error: unauthorized"}
 Server --> Client: 401 {"message":"Error: unauthorized"}
@@ -188,8 +188,8 @@ end
 Service -> DataAccess: getAuth(authToken)
 DataAccess -> Database: find authorization by authToken
 Database --> DataAccess: AuthData or null
-DataAccess --> Service: AuthData or null
-break AuthData is null
+DataAccess --> Service: auth = AuthData or null
+break auth is null
 Service --> Handler: throw UnauthorizedException
 Handler --> Server: 401 {"message":"Error: unauthorized"}
 Server --> Client: 401 {"message":"Error: unauthorized"}
@@ -221,7 +221,7 @@ group #purple Create Game #white
 Client -> Server: POST /game\nauthorization: authToken\n{gameName}
 Server -> Handler: createGameHandler(context)
 Handler -> Handler: read authorization header and deserialize JSON\ninto CreateGameRequest(authToken, gameName)
-break malformed JSON
+break malformed JSON or incompatible field types
 Handler --> Server: 400 {"message":"Error: bad request"}
 Server --> Client: 400 {"message":"Error: bad request"}
 end
@@ -234,13 +234,13 @@ end
 Service -> DataAccess: getAuth(authToken)
 DataAccess -> Database: find authorization by authToken
 Database --> DataAccess: AuthData or null
-DataAccess --> Service: AuthData or null
-break AuthData is null
+DataAccess --> Service: auth = AuthData or null
+break auth is null
 Service --> Handler: throw UnauthorizedException
 Handler --> Server: 401 {"message":"Error: unauthorized"}
 Server --> Client: 401 {"message":"Error: unauthorized"}
 end
-break gameName is missing or null
+break request is null or gameName is missing/null
 Service --> Handler: throw BadRequestException
 Handler --> Server: 400 {"message":"Error: bad request"}
 Server --> Client: 400 {"message":"Error: bad request"}
@@ -284,13 +284,13 @@ end
 Service -> DataAccess: getAuth(authToken)
 DataAccess -> Database: find authorization by authToken
 Database --> DataAccess: AuthData or null
-DataAccess --> Service: AuthData or null
-break AuthData is null
+DataAccess --> Service: auth = AuthData or null
+break auth is null
 Service --> Handler: throw UnauthorizedException
 Handler --> Server: 401 {"message":"Error: unauthorized"}
 Server --> Client: 401 {"message":"Error: unauthorized"}
 end
-break gameID is missing or playerColor is neither WHITE nor BLACK
+break request is null, gameID is missing/null, or playerColor is neither WHITE nor BLACK
 Service --> Handler: throw BadRequestException
 Handler --> Server: 400 {"message":"Error: bad request"}
 Server --> Client: 400 {"message":"Error: bad request"}
@@ -298,8 +298,8 @@ end
 Service -> DataAccess: getGame(gameID)
 DataAccess -> Database: find game by gameID
 Database --> DataAccess: GameData or null
-DataAccess --> Service: GameData or null
-break GameData is null
+DataAccess --> Service: game = GameData or null
+break game is null
 Service --> Handler: throw BadRequestException
 Handler --> Server: 400 {"message":"Error: bad request"}
 Server --> Client: 400 {"message":"Error: bad request"}
