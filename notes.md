@@ -337,3 +337,53 @@ rendering was verified through the tool's backend API instead.
 Handoff: main; Phase 2 design complete at 9 of 9 planned commits. Next step:
 submit the README presentation URL to Canvas and review any TA feedback.
 No Canvas submission has been made. Phase 3 implementation has not started.
+
+## Phase 3: Chess Web API
+
+Deadline confirmed: Thursday, October 22, 2026. The current course rubric requires
+at least 12 commits spread over the assignment period (rather than the initially
+requested 11). Start with one commit per day; one day will need a second meaningful
+commit. Daily work resumes when requested, not through an automatic schedule.
+Baseline: main at d46179d. Preserve the Phase 2 design in
+`design/phase2/contracts.md` and `design/phase2/server-design.uml`.
+
+Planned implementation milestones (adjust based on actual findings):
+1. Shared models and in-memory data access, with storage tests.
+2. Registration service, password hashing, and validation tests.
+3. Login/logout services and independent session tests.
+4. List/create game services and response models.
+5. Join game service, seat validation, and preservation tests.
+6. Clear service and cross-service lifecycle tests.
+7. Course Javalin bootstrap, static test client, and server lifecycle checks.
+8. Registration/login HTTP handlers and JSON error responses.
+9. Logout/clear HTTP handlers and authorization tests.
+10. List/create/join HTTP handlers and supplied API passoff tests.
+11. Malformed-request handling and service coverage gaps found in testing.
+12. Complete HTTP lifecycle regression tests and final submission preparation.
+
+Day 1, commit 1 (October 12): added UserData, AuthData, and GameData records in
+`shared/src/main/java/model`. Implemented the planned storage interface in
+`server/src/main/java/dataaccess/DataAccess.java`, with MemoryDataAccess and the
+course-provided DataAccessException. Users, tokens, and games have independent
+maps per store. Duplicate usernames/tokens cannot overwrite existing records;
+game IDs are allocated by the store, new seats are empty, and updates reject
+unknown IDs. Logout storage deletes only the requested token; clear removes all
+records. Individual storage operations are synchronized, and listGames returns
+a separate collection. GameData's nested ChessGame remains mutable; this is not
+a deep-copy or multi-operation transaction guarantee.
+
+Implemented interfaces: the three model records and DataAccess methods above.
+The service and HTTP interfaces in the Phase 2 contracts remain proposed.
+Password hashing and request/authentication validation belong to the forthcoming
+services; today's storage code expects service-validated records.
+
+Validation: Java 21 `mvn -B clean verify` passed in all modules: 183 tests,
+zero failures/errors/skips (171 existing chess tests and 12 new storage tests).
+New tests cover duplicate protection, token isolation, game creation/replacement,
+missing-game rejection, collection isolation, clearing, and independent stores.
+`git diff --check` passed. No service/HTTP passoff or browser test has run yet;
+those layers and course web-client setup remain unimplemented.
+
+Handoff: main; 1 of 12 Phase 3 milestones complete. Next: registration service
+with request/result records, BCrypt hashing, UUID authorization, and direct
+positive/negative service tests. No autograder or Canvas submission has occurred.
