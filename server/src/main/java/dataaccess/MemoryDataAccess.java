@@ -25,7 +25,7 @@ public class MemoryDataAccess implements DataAccess {
     @Override
     public synchronized void createUser(UserData user) throws DataAccessException {
         if (users.putIfAbsent(user.username(), user) != null) {
-            throw new DataAccessException("Username already exists");
+            throw new DuplicateUserException();
         }
     }
 

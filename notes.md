@@ -387,3 +387,21 @@ those layers and course web-client setup remain unimplemented.
 Handoff: main; 1 of 12 Phase 3 milestones complete. Next: registration service
 with request/result records, BCrypt hashing, UUID authorization, and direct
 positive/negative service tests. No autograder or Canvas submission has occurred.
+
+Day 2, commit 2 (October 13): implemented registration in
+`server/src/main/java/service/UserService.java`. Request/result records live in
+`shared/src/main/java/request/RegisterRequest.java` and
+`shared/src/main/java/result/RegisterResult.java`. Missing/blank fields produce
+ServiceException.BAD_REQUEST; existing usernames produce ALREADY_TAKEN.
+BCrypt salts and hashes passwords before storage. Successful registration stores
+UUID AuthData and returns only username/authToken. DuplicateUserException also
+handles an insertion conflict after the service's initial username lookup.
+Unexpected DataAccessException propagates for the future handler's 500 response.
+ServiceException provides business error codes; HTTP translation is not yet built.
+
+Validation: Java 21 `mvn -B clean verify` passed: 199 tests, zero failures/errors/
+skips. The 16 registration cases verify hashing, distinct salts/tokens, response
+fields, invalid input, duplicate preservation, insertion conflicts, and storage
+failures. `git diff --check` passed. No HTTP tests or submission yet.
+Handoff: main; 2 of 12 milestones complete. Next: login/logout using the same
+UserService and data-access interface. User requested two commits for October 13.
