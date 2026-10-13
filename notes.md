@@ -405,3 +405,27 @@ fields, invalid input, duplicate preservation, insertion conflicts, and storage
 failures. `git diff --check` passed. No HTTP tests or submission yet.
 Handoff: main; 2 of 12 milestones complete. Next: login/logout using the same
 UserService and data-access interface. User requested two commits for October 13.
+
+Day 2, commit 3 (October 13): implemented login/logout in UserService. Shared
+interfaces are `request/LoginRequest.java`, `request/LogoutRequest.java`, and
+`result/LoginResult.java` under `shared/src/main/java`. Login verifies BCrypt
+hashes and creates a fresh UUID authorization on each success. Missing/blank
+credentials produce BAD_REQUEST; unknown users and wrong passwords produce the
+same UNAUTHORIZED error. Passwords and usernames are not trimmed or case-folded.
+Logout validates its token, removes only that authorization, and rejects a
+missing, unknown, or revoked token. Users, games, and other sessions are preserved.
+LogoutRequest's token will come from the authorization header in the HTTP layer.
+
+Validation: Java 21 `mvn -B clean verify` passed: 221 tests, zero failures/errors/
+skips. The 22 additional session cases cover successful/repeated login, fresh
+UUIDs, malformed credentials, case sensitivity, significant password spaces,
+authorization storage failure, independent sessions, invalid/revoked tokens,
+and login after logout. Existing registration and chess/storage tests still pass.
+`git diff --check` passed. HTTP endpoints and browser/passoff testing remain for
+later milestones; this verifies direct service behavior only.
+
+Handoff: main; 3 of 12 Phase 3 milestones complete. Today's two commits satisfy
+the extra commit needed for the October 22 deadline; one daily commit from
+October 14 through October 22 would finish the remaining nine. Next requested
+work: list/create game services and response models with authorization checks
+and positive/negative tests. No autograder or Canvas submission has occurred.

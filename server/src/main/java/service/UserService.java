@@ -6,7 +6,10 @@ import dataaccess.DuplicateUserException;
 import model.AuthData;
 import model.UserData;
 import org.mindrot.jbcrypt.BCrypt;
+import request.LoginRequest;
+import request.LogoutRequest;
 import request.RegisterRequest;
+import result.LoginResult;
 import result.RegisterResult;
 
 import java.util.UUID;
@@ -38,6 +41,25 @@ public class UserService {
         }
         AuthData auth = createAuthorization(request.username());
         return new RegisterResult(auth.username(), auth.authToken());
+    }
+
+    public LoginResult login(LoginRequest request) throws ServiceException, DataAccessException {
+        if (request == null || isMissing(request.username()) || isMissing(request.password())) {
+            throw new ServiceException(BAD_REQUEST);
+        }
+        UserData user = dataAccess.getUser(request.username());
+        if (user == null || !BCrypt.checkpw(request.password(), user.password())) {
+            throw new ServiceException(UNAUTHORIZED);
+        }
+        AuthData auth = createAuthorization(user.username());
+        return new LoginResult(auth.username(), auth.authToken());
+    }
+
+    public void logout(LogoutRequest request) throws ServiceException, DataAccessException {
+        if (request == null || isMissing(request.authToken()) || dataAccess.getAuth(request.authToken()) == null) {
+            throw new ServiceException(UNAUTHORIZED);
+        }
+        dataAccess.deleteAuth(request.authToken());
     }
 
     private AuthData createAuthorization(String username) throws DataAccessException {
