@@ -429,3 +429,22 @@ the extra commit needed for the October 22 deadline; one daily commit from
 October 14 through October 22 would finish the remaining nine. Next requested
 work: list/create game services and response models with authorization checks
 and positive/negative tests. No autograder or Canvas submission has occurred.
+
+Day 3, commit 4 (October 14): implemented list/create game services in
+`server/src/main/java/service/GameService.java`. Shared request/result contracts
+are `request/ListGamesRequest.java`, `request/CreateGameRequest.java`, and
+`result/{ListGamesResult,GameSummary,CreateGameResult}.java` under
+`shared/src/main/java`. Both operations require a stored authorization token.
+Creation validates gameName, initializes an independent standard ChessGame with
+White to move, and leaves both seats empty. Listing includes every game, returns
+an empty collection when appropriate, and projects records into summaries that
+exclude board/turn state. Nullable seats remain nullable. Invalid authorization
+produces UNAUTHORIZED; missing create requests/names produce BAD_REQUEST.
+
+Validation: Java 21 `mvn -B clean verify` passed: 237 tests, zero failures/errors/
+skips. The 16 new cases cover standard setup, separate boards/IDs, request and
+response shapes, empty/all-game listing, snapshot summaries, bad requests,
+authorization ordering, and access after logout. `git diff --check` passed.
+Handoff: main; 4 of 12 milestones complete. Next: join game with seat validation.
+HTTP handlers and HTTP passoff tests are still pending. User requested two
+commits today, so the join milestone follows as a separate tested commit.
