@@ -448,3 +448,28 @@ authorization ordering, and access after logout. `git diff --check` passed.
 Handoff: main; 4 of 12 milestones complete. Next: join game with seat validation.
 HTTP handlers and HTTP passoff tests are still pending. User requested two
 commits today, so the join milestone follows as a separate tested commit.
+
+Day 3, commit 5 (October 14): added `GameService.joinGame` and the shared
+`request/JoinGameRequest.java` record (authToken, playerColor, nullable Integer
+ gameID). The authenticated username comes only from AuthData. WHITE/BLACK are
+validated exactly; missing/unknown games produce BAD_REQUEST, invalid tokens
+produce UNAUTHORIZED, and occupied requested seats produce ALREADY_TAKEN.
+Joining preserves the other seat, game name, board, and turn. One account can
+join both different seats, matching the supplied course passoff scenario.
+The authorization/read/check/update sequence synchronizes on the shared
+DataAccess instance to prevent concurrent joins from overwriting each other
+in this single-server memory implementation. This is not a distributed SQL
+transaction guarantee; revisit storage atomicity when implementing Phase 4.
+
+Validation: Java 21 `mvn -B clean verify` passed: 262 tests, zero failures/errors/
+skips. The 25 additional join cases cover both colors, position preservation,
+self-play, occupied seats, invalid/revoked tokens, missing/unknown IDs, invalid
+colors, authorization ordering, update failures, and concurrent joins through
+separate GameService instances sharing the same store. `git diff --check` passed.
+These are direct service tests; HTTP endpoints, browser testing, and course HTTP
+passoff execution remain pending.
+
+Handoff: main; 5 of 12 Phase 3 milestones complete, with two commits made today
+as requested. Seven planned milestones remain before October 22. Next requested
+work: clear service and cross-service lifecycle tests, followed by the course
+Javalin/static-client setup. No autograder or Canvas submission has occurred.
