@@ -473,3 +473,18 @@ Handoff: main; 5 of 12 Phase 3 milestones complete, with two commits made today
 as requested. Seven planned milestones remain before October 22. Next requested
 work: clear service and cross-service lifecycle tests, followed by the course
 Javalin/static-client setup. No autograder or Canvas submission has occurred.
+
+Day 4, commit 6 (October 16): implemented `service/ClearService.clear()` with
+constructor-injected DataAccess. It requires no authorization and delegates to
+the store's clear operation, propagating DataAccessException for the future
+HTTP handler's 500 response. Six direct service tests exercise clearing multiple
+users/sessions/joined games, repeated clearing, rejection of every stale token,
+re-registration and new games after clearing, logout-versus-clear behavior, and
+isolation between separate stores. These lifecycle tests use the implemented
+UserService and GameService together rather than HTTP calls.
+
+Validation: Java 21 `mvn -B -pl server -am test` passed all 268 shared/server tests
+(171 chess tests and 97 storage/service tests), with no failures/errors/skips.
+`git diff --check` passed. The clear HTTP route is not implemented yet.
+Handoff: main; 6 of 12 Phase 3 milestones complete. Next today: course Javalin
+bootstrap, static testing page, and server lifecycle checks. No submission made.
