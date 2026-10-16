@@ -488,3 +488,29 @@ Validation: Java 21 `mvn -B -pl server -am test` passed all 268 shared/server te
 `git diff --check` passed. The clear HTTP route is not implemented yet.
 Handoff: main; 6 of 12 Phase 3 milestones complete. Next today: course Javalin
 bootstrap, static testing page, and server lifecycle checks. No submission made.
+
+Day 4, commit 7 (October 16): copied the course `server/Server.java` and all four
+web resources unchanged into the active server module. ServerMain now starts
+Javalin on port 8080 and prints the testing-page URL. Server.run(0) supports a
+system-assigned test port; Server.stop() releases the listener. Three network
+integration tests verify the home page and every asset byte-for-byte, listener
+shutdown/port reuse, and independent simultaneous server instances.
+
+Implemented HTTP interface: GET / and the supplied /index.html, /index.js,
+/index.css, /favicon.ico resources. Business API routes are not registered yet;
+services still have direct tests only. Phase 2's proposed route contracts remain
+unchanged. The supplied StandardAPITests will be activated with the game routes
+in milestone 10 so the active suite does not falsely imply completed API work.
+
+Validation: Java 21 `mvn -B clean verify` passed all modules and 271 tests with
+zero failures/errors/skips. Confirmed Server.java and all web assets match the
+starter byte-for-byte. Started the packaged server through ServerMain on 8080;
+GET / and all three linked assets returned 200 and exactly matched the packaged
+resources. Stopped that temporary server after checking. `git diff --check`
+passed. This checks HTTP delivery, not visual browser rendering or API passoff.
+
+Handoff: main; 7 of 12 Phase 3 milestones complete (two commits on October 16).
+Five milestones remain before Thursday, October 22. Next: registration/login
+HTTP handlers and JSON error responses, followed by logout/clear, game routes,
+and final malformed-input/coverage/lifecycle verification. No autograder or
+Canvas submission has occurred.
