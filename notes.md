@@ -514,3 +514,37 @@ Five milestones remain before Thursday, October 22. Next: registration/login
 HTTP handlers and JSON error responses, followed by logout/clear, game routes,
 and final malformed-input/coverage/lifecycle verification. No autograder or
 Canvas submission has occurred.
+
+Day 5, commit 8 (October 19): connected `POST /user` and `POST /session` to
+UserService through `handler/UserHandler.java`. `handler/HttpJson.java` validates
+JSON object syntax and textual field types, deserializes the existing shared
+request records, and serializes responses with Gson. Services retain business
+validation and storage behavior. Server's default constructor owns a fresh
+MemoryDataAccess; an overload accepts DataAccess for testing and future storage.
+
+Implemented interfaces: unauthenticated POST /user accepts RegisterRequest
+(username/password/email); POST /session accepts LoginRequest (username/password).
+Both return 200 with their existing shared result records (username/authToken).
+Service errors map to JSON 400/401/403 with a message starting `Error:`. Storage
+and unexpected failures return 500 with a generic JSON message, excluding
+internal diagnostics. Responses set application/json; plaintext passwords and
+hashes are never returned. Unknown JSON fields are ignored; supplied required
+text fields must be strings or null (missing/null/blank fields fail validation).
+The Phase 2 design contracts remain the reference for future routes.
+
+Validation: Java 21 `mvn -B clean verify` passed all modules and 304 tests, with
+zero failures/errors/skips. The 33 new real HTTP cases cover registration/login,
+independent stored tokens, password hashing, duplicate preservation, wrong and
+unknown credentials, malformed/non-object/trailing JSON, incompatible types,
+missing/blank/null fields, Unicode/escaped credentials, significant password
+spaces, storage/runtime failures, and independent default-server storage.
+Existing static-resource/lifecycle and direct service/chess tests still pass.
+`git diff --check` passed. Full supplied API passoff remains pending until all
+routes are implemented; no browser UI or remote grading result is claimed.
+
+Handoff: main; 8 of 12 Phase 3 milestones complete. Exactly one commit requested
+and made today. Four milestones remain before October 22: logout/clear routes,
+game routes and supplied passoff tests, malformed-request/coverage review, and
+final lifecycle/submission preparation. Next: DELETE /session and DELETE /db
+using the authorization header and ClearService. No autograder or Canvas
+submission has occurred.
