@@ -572,3 +572,31 @@ before October 22: game HTTP routes with supplied passoff tests; malformed-reque
 and service coverage review; final lifecycle/submission preparation. Next: GET,
 POST, and PUT /game, including authorization-header handling and gameID parsing.
 No autograder or Canvas submission has occurred.
+
+Day 6, commit 10 (October 20): connected GET, POST, and PUT /game through
+GameHandler and the existing GameService, using the same DataAccess instance as
+the user and clear handlers. GET returns ListGamesResult with game summaries
+and no board state. POST accepts gameName and returns CreateGameResult(gameID).
+PUT accepts playerColor and gameID and returns an empty JSON object. Protected
+requests take the raw authorization header; body/query tokens and supplied
+usernames cannot grant access or choose a player identity. All successes use
+200; existing exception mapping supplies JSON 400/401/403/500 errors. Game IDs
+must be JSON numbers exactly representable as an integer; missing/null IDs are
+validated by the service, and strings, fractions, and overflow are rejected.
+The shared request/result records and design/phase2/contracts.md document the
+interfaces. Copied the supplied StandardAPITests into the active test tree
+without changing its contents.
+
+Validation: Java 21 `mvn -B clean verify` passed all modules and 373 tests with
+zero failures/errors/skips, including all 22 supplied API tests and 34 new game
+HTTP cases. The new cases cover the create/join/list lifecycle, empty results,
+response fields, initial/preserved board state, both player seats, occupied-seat
+rejection, spoofed/revoked authorization, missing fields, invalid names/colors,
+and nonnumeric/fractional/overflowing IDs. Confirmed the active supplied test file
+is byte-for-byte identical to starter-code. `git diff --check` passed.
+
+Handoff: main; 10 of 12 Phase 3 milestones complete. One commit requested today.
+All required HTTP routes are now connected and the local supplied API suite
+passes. Remaining before October 22: malformed-request/service coverage review,
+then final lifecycle and submission preparation. No browser workflow check,
+remote autograder run, or Canvas submission is claimed for this milestone.

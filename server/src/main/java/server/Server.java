@@ -5,10 +5,12 @@ import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
 import handler.HttpJson;
 import handler.ClearHandler;
+import handler.GameHandler;
 import handler.UserHandler;
 import io.javalin.Javalin;
 import service.ServiceException;
 import service.ClearService;
+import service.GameService;
 import service.UserService;
 
 public class Server {
@@ -24,10 +26,14 @@ public class Server {
 
         var users = new UserHandler(new UserService(dataAccess));
         var clear = new ClearHandler(new ClearService(dataAccess));
+        var games = new GameHandler(new GameService(dataAccess));
         javalin.post("/user", users::register);
         javalin.post("/session", users::login);
         javalin.delete("/session", users::logout);
         javalin.delete("/db", clear::clear);
+        javalin.get("/game", games::list);
+        javalin.post("/game", games::create);
+        javalin.put("/game", games::join);
 
         javalin.exception(ServiceException.class, (error, context) -> {
             int status = switch (error.getCode()) {
