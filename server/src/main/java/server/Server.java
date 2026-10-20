@@ -4,9 +4,11 @@ import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
 import handler.HttpJson;
+import handler.ClearHandler;
 import handler.UserHandler;
 import io.javalin.Javalin;
 import service.ServiceException;
+import service.ClearService;
 import service.UserService;
 
 public class Server {
@@ -21,8 +23,11 @@ public class Server {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
 
         var users = new UserHandler(new UserService(dataAccess));
+        var clear = new ClearHandler(new ClearService(dataAccess));
         javalin.post("/user", users::register);
         javalin.post("/session", users::login);
+        javalin.delete("/session", users::logout);
+        javalin.delete("/db", clear::clear);
 
         javalin.exception(ServiceException.class, (error, context) -> {
             int status = switch (error.getCode()) {

@@ -548,3 +548,27 @@ game routes and supplied passoff tests, malformed-request/coverage review, and
 final lifecycle/submission preparation. Next: DELETE /session and DELETE /db
 using the authorization header and ClearService. No autograder or Canvas
 submission has occurred.
+
+Day 5, commit 9 (October 19): added `DELETE /session` in UserHandler and
+`DELETE /db` through the new ClearHandler. Logout takes the raw token only from
+the authorization header and delegates to UserService.logout; body/query tokens
+are ignored. Clear delegates to ClearService with no authorization requirement.
+Both successful endpoints return 200 and the JSON object `{}`. Existing exception
+handlers return JSON 401 for invalid/revoked sessions and generic JSON 500 for
+storage failures. All handlers share the Server constructor's DataAccess instance.
+
+Validation: Java 21 `mvn -B clean verify` passed all modules and 317 tests with
+zero failures/errors/skips. Thirteen new HTTP cases verify logout session
+isolation, preserved accounts/games, repeated logout rejection, missing/invalid
+headers, body/query spoofing, raw-token format, clearing users/sessions/games,
+repeatable unauthenticated clear, fresh registration after clear, and storage
+failure responses for both endpoints. Game fixtures are seeded through storage
+because the game HTTP routes are the next milestone. `git diff --check` passed.
+Full supplied API passoff and browser workflow checks remain pending.
+
+Handoff: main; 9 of 12 Phase 3 milestones complete. This is one additional commit
+requested today, bringing October 19 to two commits. Three milestones remain
+before October 22: game HTTP routes with supplied passoff tests; malformed-request
+and service coverage review; final lifecycle/submission preparation. Next: GET,
+POST, and PUT /game, including authorization-header handling and gameID parsing.
+No autograder or Canvas submission has occurred.
