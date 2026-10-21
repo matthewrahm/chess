@@ -3,20 +3,28 @@ package handler;
 import chess.ChessGame;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dataaccess.DataAccess;
+import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import server.Server;
 
 import java.net.URI;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -163,5 +171,93 @@ class GameHttpTests {
         assertEquals(200, send("PUT", token,
                 "{\"playerColor\":\"WHITE\",\"gameID\":" + id + ".0}").statusCode());
         assertEquals("alice", data.getGame(id).whiteUsername());
+    }
+
+    @ParameterizedTest
+    @MethodSource("malformedGameBodies")
+    void malformedJsonCannotCreateOrJoinAndDoesNotPreventLaterRequests(String body) throws Exception {
+        int id = create();
+        var original = data.getGame(id);
+        String payload = body.replace("GAME_ID", Integer.toString(id));
+        for (String method : new String[]{"POST", "PUT"}) {
+            var response = send(method, token, payload);
+            error(response, 400);
+            assertEquals("Error: bad request", json(response).get("message").getAsString());
+            assertEquals(1, data.listGames().size());
+            assertEquals(original, data.getGame(id));
+            assertEquals(new ChessGame(), data.getGame(id).game());
+        }
+        assertNotEquals(id, create());
+        assertEquals(200, send("PUT", token,
+                "{\"playerColor\":\"WHITE\",\"gameID\":" + id + "}").statusCode());
+        assertEquals("alice", data.getGame(id).whiteUsername());
+    }
+
+    static Stream<String> malformedGameBodies() {
+        String valid = "{\"gameName\":\"Second game\",\"playerColor\":\"WHITE\",\"gameID\":GAME_ID}";
+        return Stream.of(
+                "true", "\"text\"", "42", "[" + valid + "]",
+                valid + " {}", valid + " trailing", valid.substring(0, valid.length() - 1),
+                valid.replace("}", ",}"), valid.replace('"', '\''),
+                valid.replace("\"gameName\"", "gameName"), "/* comment */" + valid,
+                valid.replace(":GAME_ID", ":01"), valid.replace("Second game", "Invalid\\q"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("gameStorageFailures")
+    void storageFailuresReturnGenericErrorsWithoutChangingGamesAndCanRecover(
+            String method, String operation, boolean unexpected) throws Exception {
+        int id = create();
+        var original = data.getGame(id);
+        var failing = new AtomicBoolean(true);
+        DataAccess storage = (DataAccess) Proxy.newProxyInstance(DataAccess.class.getClassLoader(),
+                new Class<?>[]{DataAccess.class}, (proxy, called, args) -> {
+                    if (failing.get() && called.getName().equals(operation)) {
+                        if (unexpected) {
+                            throw new IllegalStateException("Private storage diagnostics");
+                        }
+                        throw new DataAccessException("Private storage diagnostics");
+                    }
+                    try {
+                        return called.invoke(data, args);
+                    } catch (InvocationTargetException exception) {
+                        throw exception.getCause();
+                    }
+                });
+        server.stop();
+        server = new Server(storage);
+        port = server.run(0);
+        String body = "{\"gameName\":\"Second game\",\"playerColor\":\"WHITE\",\"gameID\":" + id + "}";
+
+        var response = send(method, token, body);
+        error(response, 500);
+        assertEquals("Error: internal server error", json(response).get("message").getAsString());
+        assertEquals(1, data.listGames().size());
+        assertEquals(original, data.getGame(id));
+        assertEquals(new ChessGame(), data.getGame(id).game());
+        assertNotNull(data.getAuth(token));
+        assertNotNull(data.getUser("alice"));
+
+        failing.set(false);
+        var recovered = send(method, token, body);
+        assertEquals(200, recovered.statusCode(), recovered.body());
+        switch (method) {
+            case "GET" -> assertEquals(1, json(recovered).getAsJsonArray("games").size());
+            case "POST" -> {
+                assertEquals(2, data.listGames().size());
+                assertNotEquals(id, json(recovered).get("gameID").getAsInt());
+            }
+            case "PUT" -> assertEquals("alice", data.getGame(id).whiteUsername());
+            default -> fail("Unexpected HTTP method");
+        }
+    }
+
+    static Stream<Arguments> gameStorageFailures() {
+        return Stream.of(new String[]{"GET", "getAuth"}, new String[]{"GET", "listGames"},
+                        new String[]{"POST", "getAuth"}, new String[]{"POST", "createGame"},
+                        new String[]{"PUT", "getAuth"}, new String[]{"PUT", "getGame"},
+                        new String[]{"PUT", "updateGame"})
+                .flatMap(route -> Stream.of(false, true)
+                        .map(unexpected -> Arguments.of(route[0], route[1], unexpected)));
     }
 }

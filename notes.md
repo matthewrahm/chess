@@ -600,3 +600,29 @@ All required HTTP routes are now connected and the local supplied API suite
 passes. Remaining before October 22: malformed-request/service coverage review,
 then final lifecycle and submission preparation. No browser workflow check,
 remote autograder run, or Canvas submission is claimed for this milestone.
+
+Day 7, commit 11 (October 21): reviewed request validation and service failure
+coverage and added 27 regression cases to GameHttpTests. Thirteen malformed JSON
+cases exercise both POST and PUT /game, including primitive/array bodies,
+truncated/trailing documents, single quotes, unquoted keys, comments, trailing
+commas, leading-zero numbers, and invalid escapes. They require JSON 400 errors,
+preserved games/boards/seats, and successful subsequent create/join requests.
+Fourteen fault-injection cases exercise checked DataAccessException and unexpected
+runtime failures from getAuth, listGames, createGame, getGame, and updateGame
+across the applicable game routes. Failures injected before storage mutations
+must return the generic JSON 500 message without leaking diagnostics, preserve
+existing users/sessions/games, and allow the same request to succeed once the
+injected fault is removed. Existing service tests already cover positive and
+negative registration, login/logout, clear, list/create, and join behavior.
+No production changes were needed for these cases; implemented interfaces remain
+the shared request/result records and GameHandler routes documented above.
+
+Validation: Java 21 `mvn -B clean verify` passed all modules and 400 tests with
+zero failures/errors/skips, including 61 game HTTP cases and all 22 supplied API
+tests. Confirmed the supplied test source remains byte-for-byte unchanged from
+starter-code. `git diff --check` passed.
+
+Handoff: main; 11 of 12 Phase 3 milestones complete. One commit requested today.
+Next: complete the final HTTP lifecycle regression and submission-readiness
+review before October 22. Current checks are local; no remote grading or Canvas
+submission was performed, and submission still requires the user's instruction.
