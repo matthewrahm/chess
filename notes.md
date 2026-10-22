@@ -626,3 +626,29 @@ Handoff: main; 11 of 12 Phase 3 milestones complete. One commit requested today.
 Next: complete the final HTTP lifecycle regression and submission-readiness
 review before October 22. Current checks are local; no remote grading or Canvas
 submission was performed, and submission still requires the user's instruction.
+
+Day 8, commit 12 (October 22): added ApiLifecycleTests, which use only the public
+HTTP API and the default Server constructor. The complete workflow registers two
+users, creates an independent second login, creates and joins two games, checks
+both player assignments, rejects an occupied seat, and logs out one session
+without changing games or other sessions. Clear then invalidates every old token,
+removes login credentials and games, permits the same username to register again,
+and supports a fresh create/join/list workflow. A second test replaces the server
+on the same port and verifies that in-memory users, sessions, and games do not
+survive the new server instance. List comparisons do not assume response order.
+README now documents the verified Java 21 build/run commands, in-memory lifetime,
+implemented HTTP routes, raw-token header, and shared request/result locations.
+No public interfaces or Phase 2 design files changed.
+
+Validation: the final Java 21 `mvn -B clean verify` passed all modules and 402 tests
+with zero failures/errors/skips, including both new lifecycle tests and all 22
+supplied API tests. Confirmed supplied test source remains unchanged. Separately
+launched `java -jar server/target/server-test-dependencies.jar` and verified the
+served course page plus register, create, join, list, logout, and clear over HTTP;
+then stopped that test process. `git diff --check` passed. This was an HTTP smoke
+check of the packaged application, not an interactive browser or remote grader run.
+
+Handoff: main; all 12 planned Phase 3 milestones complete, with one commit today.
+Implementation and local verification are complete. Next step is the user's
+review and explicit instruction to submit for grading; no grading tag, remote
+autograder request, or Canvas submission has been made.
