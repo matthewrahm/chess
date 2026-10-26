@@ -815,3 +815,36 @@ Reviewed method size, naming, prepared bindings, resource ownership, and error
 semantics against the rubric; broader whole-project quality review remains planned.
 Official tests were not edited. HTTP/service interfaces and default memory server
 are unchanged. Next today: SQL authorization storage and its tests (milestone 4).
+
+
+## October 26 - Phase 4 authorization storage (milestone 4 of 10)
+
+Added SqlAuthDao with prepared statements for session creation, lookup, and
+single-token deletion. Missing tokens return null; deleting a missing token is
+idempotent, matching MemoryDataAccess. Duplicate tokens fail without replacing
+the owner. SQL errors and connection errors propagate as DataAccessException.
+User/token methods keep the existing DataAccess signatures for later delegation;
+HTTP routes, authentication headers, and shared request/result records are unchanged.
+
+Twelve MySQL cases cover multiple sessions per user, persistence across DAO
+instances/schema setup, absent/null tokens, duplicate-token preservation, selective
+logout deletion, retained user records, exact case/space keys, Unicode/SQL input,
+null/oversized values, missing tables, and connection outage/recovery. Tests are
+in the required dataaccess folder and use isolated catalogs, not development data.
+
+Java 21 `mvn -B clean verify` passed all modules: 442 tests, zero failures, errors,
+or skips, including 24 new SQL DAO cases today. SqlUserDao coverage is 26/26 lines;
+SqlAuthDao is 31/31. Overall implemented SQL-package line coverage is 65/67 (97.01%),
+and the configured 80% coverage gate passed. The two uncovered lines remain the
+schema SQL-exception translation. This measures today's implementation, not the
+unfinished game DAO or final Phase 4 pass-off suite. Official tests were unchanged.
+Reviewed the new classes for single responsibilities, short methods, consistent
+naming/formatting, parameter binding, and automatic JDBC resource cleanup.
+
+Handoff: main; four of ten planned milestones complete after today's two commits.
+Next October 28: SQL game creation/get/list with full board serialization, then
+updates and transactional clear with game-state round trips. Default Server still
+uses MemoryDataAccess; official DatabaseTests activation and full server restart
+persistence checks remain milestone 7. Whole-project decomposition/readability
+review remains milestone 9. No grading submission or co-author trailers. Six
+planned commits remain: two each October 28, 30, and 31 (deadline October 31).

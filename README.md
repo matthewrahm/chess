@@ -64,9 +64,10 @@ Edit `db.properties` for your local MySQL account. This file is ignored by Git;
 do not commit database credentials. The example matches a fresh local Homebrew
 installation. The account needs permission to create databases and tables.
 
-The connection manager, idempotent table setup, and SQL user creation/lookups
-are implemented. Authorization and game operations are upcoming; the server
-currently still uses memory. The official database pass-off tests remain in `starter-code` until
+The connection manager, idempotent table setup, SQL user creation/lookups, and
+SQL authorization creation/lookups/deletion are implemented and tested against
+MySQL. Game storage and server integration are upcoming; the server currently
+still uses memory. The official database pass-off tests remain in `starter-code` until
 the SQL implementation is connected to the server. See [notes.md](notes.md) for
 the ten-milestone plan and current verification gaps.
 
