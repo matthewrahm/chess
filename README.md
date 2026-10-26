@@ -51,6 +51,31 @@ java -jar client/target/client-jar-with-dependencies.jar
 ♕ 240 Chess Client: chess.ChessPiece@7852e922
 ```
 
+## Phase 4: Database setup (in progress)
+
+Install MySQL 8.4 LTS and start it before running the database tests. On macOS
+with Homebrew, use `brew services start mysql@8.4`. Create your local configuration:
+
+```sh
+cp server/src/main/resources/db.properties.example server/src/main/resources/db.properties
+```
+
+Edit `db.properties` for your local MySQL account. This file is ignored by Git;
+do not commit database credentials. The example matches a fresh local Homebrew
+installation. The account needs permission to create databases and tables.
+
+The connection manager and idempotent table setup are implemented. SQL user,
+authorization, and game operations are upcoming; the server currently still
+uses memory. The official database pass-off tests remain in `starter-code` until
+the SQL implementation is connected to the server. See [notes.md](notes.md) for
+the ten-milestone plan and current verification gaps.
+
+Run `mvn -B clean verify` with Java 21. Database tests use temporary `chess_test_*`
+catalogs, remove them afterward, and restore the development configuration.
+The build generates a coverage report at `server/target/site/jacoco/index.html`
+and fails if line coverage in `dataaccess.sql` is below the course's 80% minimum.
+The target for the completed SQL implementation is at least 90%.
+
 ## Phase 3: Chess Web API
 
 With Java 21 and Maven available, run these commands from the repository root:

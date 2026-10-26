@@ -750,3 +750,46 @@ Validation: Java 21 `mvn -B clean verify` passed 406 active tests with zero
 failures/errors/skips, including the three new database connection tests and
 all 23 current StandardAPITests. Source review confirmed resource ownership,
 small focused methods, parameter names, and preserved starter compatibility.
+
+Day 1, commit 2: added DatabaseSchema in dataaccess.sql and twelve real-MySQL
+schema cases under the required dataaccess test folder. Setup creates users,
+authorizations, and games without replacing existing tables or rows. The DDL
+in DatabaseSchema.java is the schema source of truth: username/token primary
+keys, generated integer game IDs, nullable player seats, required game JSON,
+and case-sensitive/no-padding text comparison. No foreign keys are introduced:
+the existing DataAccess contract permits independent user/auth/game storage,
+while services enforce authorization and valid players. These constraints are
+covered by tests rather than relying on MySQL's default collation.
+
+One initial test incorrectly expected CREATE TABLE IF NOT EXISTS to reject an
+existing view. MySQL permits this without validating structure, consistent with
+the course warning that IF NOT EXISTS does not migrate existing schemas. Removed
+that invalid test expectation; setup deliberately does not alter existing data.
+
+Added JaCoCo reporting and an 80% SQL-package line-coverage build gate matching
+the actual course requirement. The completed DAO target remains 90%+. Today's
+schema has 8/10 executable lines covered (80%); its SQL-exception translation
+branch is not exercised. The completed SQL DAO methods do not exist yet, so this
+is not a claim of final Phase 4 coverage. Local service coverage is 86/86 lines
+(100%), which confirms local discovery but does not explain or resolve the
+previous remote grader's service-package warning.
+
+Validation: Java 21 `mvn -B clean verify` passed all modules and 418 active tests
+with zero failures/errors/skips. This includes 12 schema cases, 3 connection
+cases, 23 current official API tests, and previous regression/service tests.
+The 80% SQL gate passed. A separate check with the temporary command-line
+threshold raised to 90% failed specifically on dataaccess.sql at 80%, confirming
+that the gate actually inspects the intended package; no source/config threshold
+was changed for that control check. No temporary chess_test_* catalogs remained.
+Reviewed current new code for focused responsibilities, resource cleanup,
+non-destructive setup, naming, whitespace, and duplication. The broader shared
+code/Phase 3 decomposition review is still planned, not claimed complete.
+
+Handoff: main; two of ten planned milestones completed today. Next: implement
+SQL user storage and its positive/negative tests, then SQL authorization storage.
+Public HTTP request/response records and authentication behavior are unchanged.
+README documents local setup, actual current scope, and the coverage report.
+No source implementation beyond these first two milestones, grading submission,
+co-author trailer, or scheduled future commit is included. The remaining eight
+commits should accompany real work on subsequent days; the user has been asked
+for the deadline to finalize the dates.
