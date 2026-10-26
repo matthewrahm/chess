@@ -652,3 +652,101 @@ Handoff: main; all 12 planned Phase 3 milestones complete, with one commit today
 Implementation and local verification are complete. Next step is the user's
 review and explicit instruction to submit for grading; no grading tag, remote
 autograder request, or Canvas submission has been made.
+
+October 22 grading feedback and verification correction:
+The user subsequently submitted Phase 3 and supplied screenshots showing 90.69%,
+on time: Web API 125/125, Code Quality 12/30, and Unit Tests 26.25/25. Naming and
+Package Structure passed; Code Decomposition and Readability failed. Feedback
+does not identify individual files or rules, so the specific causes remain
+unconfirmed. The earlier local-readiness statement did not establish rubric
+compliance: the Maven POMs do not configure quality or coverage checks.
+
+The grader also warned about StandardAPITests.java and missing `service` coverage.
+Local active tests still match the local starter copy, but the official chess
+repository at d3ffc6639e2d78d0e88b3fe899936b995d8614e1 has a different file: 23 tests,
+revised ordering, and the token-validity portion split into its own test. This is
+confirmed upstream drift and a possible explanation for the warning, not proof
+of the grader's exact comparison. Production and test sources both contain the
+required `service` package at the documented paths. The coverage warning remains
+unexplained; do not move correct packages or claim it fixed without more evidence.
+
+Future checks must review the whole grading scope against the official rubric:
+https://github.com/softwareconstruction240/softwareconstruction/blob/main/instruction/code-quality-rubric/code-quality-rubric.md
+Check responsibilities, oversized methods/classes, duplication, formatting,
+comments, and dead code separately from functional tests. Compare official tests
+against a recorded authoritative upstream revision. Explicitly report unchecked
+quality/coverage categories and unresolved warnings. These lessons are also saved
+in the user's persistent Codex instructions for future coursework.
+
+Handoff: main at 94dd394; passing functional implementation, with known quality
+deductions and unresolved grader warnings. This learning/review turn changes only
+instructions and notes; no source/test edits, commit, or resubmission. Next repair
+work should audit decomposition/readability across the whole project, reconcile
+the official test version, and investigate coverage discovery before any claim
+of full grading readiness. Follow the user's instructions for any resubmission.
+
+## Phase 4 plan - MySQL persistence
+
+Course topic 35fc7825-07b3-4400-82c1-9b06147291ea maps to
+`chess/4-database/database.md` in the course manifest. Instructions and quality
+rubric reviewed at course revision 23e9b5cb6c1084ba27a6b9c4b738b4679d731401.
+Starter source/test reference: d3ffc6639e2d78d0e88b3fe899936b995d8614e1.
+The course requires at least eight distributed commits; the user's plan is ten,
+with exactly two today (October 25) and eight on later days this week. Deadline
+confirmation is pending. Use actual work dates, and do not submit for grading
+without explicit instruction.
+
+Planned implementation milestones:
+1. Database connections, isolated MySQL tests, and current official API tests.
+2. Automatic schema creation, schema tests, and measured SQL coverage.
+3. SQL user creation/lookups, duplicate handling, and BCrypt storage checks.
+4. SQL authorization creation/lookups/deletion with positive and negative tests.
+5. SQL game creation, lookup/listing, generated IDs, and board serialization.
+6. SQL game updates and transactional clear; full game-state round-trip tests.
+7. Compose the SQL DataAccess implementation, wire server startup, and activate
+   the current unmodified DatabaseTests. Update the memory-only restart test.
+8. Database outage/restart and DAO coverage review, targeting at least 90% line
+   coverage on dataaccess.sql (course minimum 80%).
+9. Review/refactor decomposition and readability across the entire graded source,
+   including shared chess code. Check the rubric separately from functionality.
+10. Full tests, coverage gate, packaged-server persistence check, official-test
+    version comparison, and final quality/readiness review.
+
+SQL implementation belongs in `server/src/main/java/dataaccess/sql`; SQL tests
+belong in `server/src/test/java/dataaccess` and must end in Test or Tests. The
+instructions contain one `dataccess/sql` typo, but their grading table explicitly
+specifies `dataaccess.sql`, matching the existing dataaccess interface package.
+DatabaseManager stays in dataaccess with the starter's reflection-accessed
+configuration methods and getConnection signature. Current shared request/result
+records and HTTP routes remain the implemented public interface; this phase
+replaces storage behind DataAccess. No frontend contract changes are planned.
+
+Local setup: MySQL 8.4 LTS installed via Homebrew and started as mysql@8.4.
+Copy `server/src/main/resources/db.properties.example` to `db.properties` and
+configure local MySQL access. Actual db.properties remains ignored by Git.
+SQL tests create uniquely named chess_test_* catalogs and drop only their own
+catalogs afterward; they restore the configured development database settings.
+
+The October 22 deductions remain relevant. A current test-file match alone does
+not prove the grader warning is resolved. The earlier service coverage warning
+has no confirmed cause; local coverage will now be measured explicitly. Maven
+success will not be described as a code-quality grade or a guarantee of full credit.
+
+Day 1, commit 1: added DatabaseManager based on the official starter, preserving
+its configuration method signatures for the pass-off tests. Database names are
+quoted, connection failures become DataAccessException, and a connection is
+closed if selecting its catalog fails. Added a credential-free example config
+and three MySQL-backed tests for idempotent creation, independent connections,
+missing catalogs, outage errors, and recovery. The server still uses memory
+until the planned SQL wiring milestone.
+
+Reconciled StandardAPITests with the recorded current upstream source in both
+starter and active locations; it now has 23 tests. Updated the starter copy of
+DatabaseTests from the same revision (including its null-safe BCrypt inspection).
+The database pass-off suite remains in starter-code until SQL integration; it is
+not claimed to pass or silently excluded from an active suite.
+
+Validation: Java 21 `mvn -B clean verify` passed 406 active tests with zero
+failures/errors/skips, including the three new database connection tests and
+all 23 current StandardAPITests. Source review confirmed resource ownership,
+small focused methods, parameter names, and preserved starter compatibility.
