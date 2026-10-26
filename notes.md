@@ -693,8 +693,9 @@ rubric reviewed at course revision 23e9b5cb6c1084ba27a6b9c4b738b4679d731401.
 Starter source/test reference: d3ffc6639e2d78d0e88b3fe899936b995d8614e1.
 The course requires at least eight distributed commits; the user's plan is ten,
 with exactly two today (October 25) and eight on later days this week. Deadline
-confirmation is pending. Use actual work dates, and do not submit for grading
-without explicit instruction.
+is October 31, confirmed by the user. Remaining work is planned for October
+26, 28, 30, and 31, with two substantive commits per day. Use actual work dates,
+and do not submit for grading without explicit instruction.
 
 Planned implementation milestones:
 1. Database connections, isolated MySQL tests, and current official API tests.
@@ -791,5 +792,26 @@ Public HTTP request/response records and authentication behavior are unchanged.
 README documents local setup, actual current scope, and the coverage report.
 No source implementation beyond these first two milestones, grading submission,
 co-author trailer, or scheduled future commit is included. The remaining eight
-commits should accompany real work on subsequent days; the user has been asked
-for the deadline to finalize the dates.
+commits should accompany real work on subsequent days. The user confirmed
+October 31 as the deadline. Plan two commits each on October 26, 28, 30, and 31.
+This is a work plan, not an automatic schedule; resume when the user requests it.
+
+
+## October 26 - Phase 4 user storage (milestone 3 of 10)
+
+Added SqlUserDao with prepared statements, caller-scoped connections, null for
+missing users, and DuplicateUserException only for MySQL duplicate-key errors.
+Other SQL failures remain checked storage errors. UserService still owns BCrypt
+hashing; the DAO stores the supplied hash unchanged. Schema initialization stays
+separate so the later SQL facade can initialize once at startup.
+
+Twelve MySQL test cases cover persistence across DAO instances/schema setup,
+missing/null lookups, duplicate preservation, case/trailing-space keys, Unicode,
+SQL punctuation, stored BCrypt verification, invalid fields/lengths, missing
+tables, and connection failure/recovery. Each test uses its own temporary catalog.
+Java 21 `mvn -B clean verify` passed 430 tests with no failures/errors/skips.
+SqlUserDao line coverage is 26/26; current dataaccess.sql coverage is 34/36 (94.44%).
+Reviewed method size, naming, prepared bindings, resource ownership, and error
+semantics against the rubric; broader whole-project quality review remains planned.
+Official tests were not edited. HTTP/service interfaces and default memory server
+are unchanged. Next today: SQL authorization storage and its tests (milestone 4).
