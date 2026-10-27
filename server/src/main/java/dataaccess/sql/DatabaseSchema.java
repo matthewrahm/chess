@@ -13,13 +13,13 @@ public final class DatabaseSchema {
                 username VARCHAR(255) PRIMARY KEY,
                 password_hash VARCHAR(60) NOT NULL,
                 email VARCHAR(255) NOT NULL
-            ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin
             """,
             """
             CREATE TABLE IF NOT EXISTS authorizations (
                 auth_token VARCHAR(64) PRIMARY KEY,
                 username VARCHAR(255) NOT NULL
-            ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin
             """,
             """
             CREATE TABLE IF NOT EXISTS games (
@@ -28,7 +28,7 @@ public final class DatabaseSchema {
                 black_username VARCHAR(255) DEFAULT NULL,
                 game_name VARCHAR(255) NOT NULL,
                 game_json TEXT NOT NULL
-            ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin
             """
     };
 

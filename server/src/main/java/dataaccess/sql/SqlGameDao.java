@@ -61,6 +61,27 @@ public final class SqlGameDao {
         }
     }
 
+    public void updateGame(GameData game) throws DataAccessException {
+        String json = GameJson.encode(game.game());
+        String sql = """
+                UPDATE games SET white_username = ?, black_username = ?, game_name = ?, game_json = ?
+                WHERE game_id = ?
+                """;
+        try (var connection = DatabaseManager.getConnection();
+             var statement = connection.prepareStatement(sql)) {
+            statement.setString(1, game.whiteUsername());
+            statement.setString(2, game.blackUsername());
+            statement.setString(3, game.gameName());
+            statement.setString(4, json);
+            statement.setInt(5, game.gameID());
+            if (statement.executeUpdate() == 0) {
+                throw new DataAccessException("Game does not exist");
+            }
+        } catch (SQLException exception) {
+            throw new DataAccessException("Unable to update game", exception);
+        }
+    }
+
     private GameData readGame(ResultSet results) throws SQLException, DataAccessException {
         return new GameData(results.getInt("game_id"), results.getString("white_username"),
                 results.getString("black_username"), results.getString("game_name"),

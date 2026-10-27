@@ -870,3 +870,43 @@ Uncovered lines are the schema's SQL-error wrapper and missing-generated-ID guar
 Reviewed focused responsibilities, method length, parameterized SQL, and resource
 cleanup. Default server still uses memory; official DatabaseTests and whole-project
 quality review remain pending. Next today: updates and transactional clearing.
+
+
+## October 27 - Phase 4 game updates and atomic clear (milestone 6 of 10)
+
+SqlGameDao now updates player seats, names, and full game state by ID. Unchanged
+records succeed; missing IDs fail without inserting; SQL/connection failures are
+checked storage errors. SqlDatabaseCleaner owns a single JDBC transaction for
+all three deletes and rolls back on failure, retaining any rollback error as a
+suppressed exception. DELETE preserves tables and ID sequences. Newly created
+tables explicitly use InnoDB; setup still does not migrate preexisting tables.
+
+Six update tests check player assignment/vacating, changed board/turn/name,
+unchanged updates, isolated records, missing IDs, invalid values, and outages.
+Six state tests reload checkmate, stalemate, promotion, en passant availability,
+castling availability, and lost castling rights after a rook returns home. They
+compare complete games and assert observable chess behavior after deserialization.
+Four clearing tests cover successful/repeated clear, usable tables afterward,
+transactional engines, connection failure, and rollback. The rollback test uses
+a trigger that rejects the second table delete and confirms the earlier deleted
+authorization is restored along with the untouched users and games. All test
+catalogs are unique and were cleaned up; zero chess_test_* catalogs remained.
+
+Java 21 `mvn -B clean verify` passed 473 tests, zero failures/errors/skips, including
+31 new MySQL cases across today's commits. Current SQL package coverage is 144/149
+lines (96.64%); the 80% gate passes. Remaining uncovered lines are the schema SQL
+error wrapper, generated-ID guard, and secondary rollback-failure handling.
+No official tests changed. Reviewed today's production classes against the rubric:
+JDBC, JSON conversion, and transaction coordination have separate responsibilities;
+methods remain focused, SQL values are bound, and resources close automatically.
+The whole-project quality audit and final Phase 4 pass-off are still pending.
+
+Handoff: main; six of ten planned milestones complete. Today's request moves the
+previously planned October 28 pair to October 27. Four commits remain, currently
+planned for October 30 and 31 unless the user requests earlier work. Deadline is
+October 31. Next: compose the SQL DataAccess facade, initialize it on default server
+startup, activate the unmodified DatabaseTests, and update the memory-specific
+lifecycle test appropriately. Then validate SQL outages/restarts and final coverage.
+Public HTTP records/routes are unchanged; SQL methods match existing DataAccess.
+Default Server still uses memory until that integration milestone. No grading
+submission, co-author trailers, or automatic future commits.
