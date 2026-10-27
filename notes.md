@@ -848,3 +848,25 @@ uses MemoryDataAccess; official DatabaseTests activation and full server restart
 persistence checks remain milestone 7. Whole-project decomposition/readability
 review remains milestone 9. No grading submission or co-author trailers. Six
 planned commits remain: two each October 28, 30, and 31 (deadline October 31).
+
+
+## October 27 - Phase 4 game creation and retrieval (milestone 5 of 10)
+
+The user requested today's two commits, moving milestones 5-6 forward from the
+planned October 28 session. Actual commit dates are retained. Added SqlGameDao
+for generated game IDs, nullable player seats, lookup, and listing. GameJson
+separates Gson conversion and required-state validation from JDBC operations.
+All ChessGame fields are serialized, including en passant and castling history.
+Prepared statements preserve arbitrary names; callers receive detached snapshots.
+Existing DataAccess method signatures and shared GameData remain the interface.
+
+Fifteen real-MySQL cases verify every initial-board square, supplied moved boards
+and turns, persistence across DAO instances, independent generated IDs, duplicate
+and quoted/Unicode names, absent IDs, empty lists, snapshot isolation, malformed
+JSON, missing required state, database constraints, and SQL/connection failures.
+Java 21 `mvn -B clean verify` passed 457 tests with no failures/errors/skips.
+Current dataaccess.sql line coverage is 108/111 (97.30%); the 80% gate passed.
+Uncovered lines are the schema's SQL-error wrapper and missing-generated-ID guard.
+Reviewed focused responsibilities, method length, parameterized SQL, and resource
+cleanup. Default server still uses memory; official DatabaseTests and whole-project
+quality review remain pending. Next today: updates and transactional clearing.

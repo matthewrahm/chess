@@ -66,8 +66,9 @@ installation. The account needs permission to create databases and tables.
 
 The connection manager, idempotent table setup, SQL user creation/lookups, and
 SQL authorization creation/lookups/deletion are implemented and tested against
-MySQL. Game storage and server integration are upcoming; the server currently
-still uses memory. The official database pass-off tests remain in `starter-code` until
+MySQL. SQL game creation, lookup, and listing now preserve full game JSON.
+Game updates, transactional clearing, and server integration are upcoming; the
+server currently still uses memory. The official database pass-off tests remain in `starter-code` until
 the SQL implementation is connected to the server. See [notes.md](notes.md) for
 the ten-milestone plan and current verification gaps.
 
