@@ -942,3 +942,39 @@ failure propagation. Whole-project quality review remains milestone 9.
 Handoff: main; seven milestones complete. Next today: SQL HTTP outage/recovery and
 restart tests, required test-package relocation, and measured coverage review.
 No grading submission or co-author trailers.
+
+
+## October 30 - Phase 4 restart and outage verification (milestone 8 of 10)
+
+Moved all SQL test classes and their catalog fixture into dataaccess.sql, matching
+the current course's server/src/test/java/dataaccess/sql requirement. Memory-only
+storage tests remain in dataaccess. New HTTP tests exercise the default SQL Server:
+credentials, multiple sessions, player seats, full moved-board state, and generated
+IDs survive replacement servers; logout and clear remain effective after restart;
+two simultaneously running servers see each other's assignments and revocations.
+Seven parameterized outage cases verify every endpoint returns the exact safe 500
+JSON error, preserves existing records, and succeeds again on the same server when
+connectivity is restored. Startup failure is checked separately: storage errors
+prevent server construction, and a subsequent valid startup works.
+
+Java 21 `mvn -B clean verify` passed all 490 tests with zero failures/errors/skips,
+including 84 cases discovered under dataaccess.sql and the unchanged 26 official
+API/database cases. SQL line coverage is 166/171 (97.08%); the 80% gate passed and
+the measured result exceeds the 90% target. Facade, user/auth DAOs, and JSON helper
+have 100% line coverage. Five lines remain uncovered: the schema SQL-error wrapper,
+the generated-ID guard, and secondary rollback-failure handling. Service line
+coverage remains 86/86. This is local evidence, not a remote grading result.
+
+Verified test packages/filenames, assertion coverage, unchanged official source,
+new helper/test responsibilities, and diff whitespace. All temporary test and
+verification catalogs were removed (zero remaining). Local database configuration
+was restored after full-suite execution. README now explains persistent startup,
+explicit memory injection, SQL test locations, and official tests' database clearing.
+HTTP interfaces and authentication/error contracts remain unchanged.
+
+Handoff: main; eight of ten planned Phase 4 milestones complete after exactly two
+commits today. Remaining for October 31: whole-project decomposition/readability
+review (including earlier-phase shared code), then final checks and packaged-server
+persistence verification. Recheck the current instructions and official test revision
+at that point. The previous grader's quality/coverage warnings are historical and
+have not been re-evaluated remotely. No grading submission or co-author trailers.

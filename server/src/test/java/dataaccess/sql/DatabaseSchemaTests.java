@@ -1,6 +1,7 @@
-package dataaccess;
+package dataaccess.sql;
 
-import dataaccess.sql.DatabaseSchema;
+import dataaccess.DataAccessException;
+import dataaccess.DatabaseManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

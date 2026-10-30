@@ -1,11 +1,8 @@
-package dataaccess;
+package dataaccess.sql;
 
 import chess.ChessGame;
-import dataaccess.sql.DatabaseSchema;
-import dataaccess.sql.SqlAuthDao;
-import dataaccess.sql.SqlDatabaseCleaner;
-import dataaccess.sql.SqlGameDao;
-import dataaccess.sql.SqlUserDao;
+import dataaccess.DataAccessException;
+import dataaccess.DatabaseManager;
 import model.AuthData;
 import model.UserData;
 import org.junit.jupiter.api.AfterEach;

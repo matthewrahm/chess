@@ -1,12 +1,10 @@
-package dataaccess;
+package dataaccess.sql;
 
 import chess.ChessBoard;
 import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessPosition;
-import dataaccess.sql.DatabaseSchema;
-import dataaccess.sql.SqlGameDao;
 import model.GameData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

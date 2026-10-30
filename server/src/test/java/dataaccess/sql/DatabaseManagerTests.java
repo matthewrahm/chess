@@ -1,5 +1,7 @@
-package dataaccess;
+package dataaccess.sql;
 
+import dataaccess.DataAccessException;
+import dataaccess.DatabaseManager;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;

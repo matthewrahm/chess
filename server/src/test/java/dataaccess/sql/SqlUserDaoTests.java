@@ -1,7 +1,8 @@
-package dataaccess;
+package dataaccess.sql;
 
-import dataaccess.sql.DatabaseSchema;
-import dataaccess.sql.SqlUserDao;
+import dataaccess.DataAccessException;
+import dataaccess.DatabaseManager;
+import dataaccess.DuplicateUserException;
 import model.UserData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

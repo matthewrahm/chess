@@ -1,4 +1,6 @@
-package dataaccess;
+package dataaccess.sql;
+
+import dataaccess.DatabaseManager;
 
 import java.lang.reflect.Method;
 import java.sql.Connection;

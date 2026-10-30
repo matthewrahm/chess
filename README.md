@@ -71,7 +71,7 @@ The unmodified official `DatabaseTests` and `StandardAPITests` are active.
 Use `new Server(new MemoryDataAccess())` only when explicitly testing memory storage.
 See [notes.md](notes.md) for the ten-milestone plan and remaining review work.
 
-Run `mvn -B clean verify` with Java 21. Our SQL unit tests use temporary `chess_test_*` catalogs, remove them afterward,
+Run `mvn -B clean verify` with Java 21. Our SQL tests in `server/src/test/java/dataaccess/sql` use temporary `chess_test_*` catalogs, remove them afterward,
 and restore the original configuration. The official API/database tests clear the
 configured database. Point `db.properties` at a disposable test database before
 running the full suite; restore your development configuration afterward.
