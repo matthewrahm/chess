@@ -1,5 +1,6 @@
 package server;
 
+import dataaccess.MemoryDataAccess;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -22,7 +23,7 @@ class ServerLifecycleTests {
 
     @Test
     void servesCoursePageAndAllAssetsOnAssignedPort() throws Exception {
-        var server = new Server();
+        var server = new Server(new MemoryDataAccess());
         try {
             int port = server.run(0);
             assertTrue(port > 0);
@@ -45,7 +46,7 @@ class ServerLifecycleTests {
 
     @Test
     void stopClosesListenerAndAllowsPortReuse() throws Exception {
-        var server = new Server();
+        var server = new Server(new MemoryDataAccess());
         int port;
         try {
             port = server.run(0);
@@ -56,7 +57,7 @@ class ServerLifecycleTests {
         int stoppedPort = port;
         assertThrows(IOException.class, () -> get(stoppedPort, "/"));
 
-        var replacement = new Server();
+        var replacement = new Server(new MemoryDataAccess());
         try {
             assertEquals(port, replacement.run(port));
             assertEquals(200, get(port, "/").statusCode());
@@ -67,8 +68,8 @@ class ServerLifecycleTests {
 
     @Test
     void separateServersCanRunAndStopIndependently() throws Exception {
-        var first = new Server();
-        var second = new Server();
+        var first = new Server(new MemoryDataAccess());
+        var second = new Server(new MemoryDataAccess());
         try {
             int firstPort = first.run(0);
             int secondPort = second.run(0);

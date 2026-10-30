@@ -209,13 +209,13 @@ class UserHttpTests {
     }
 
     @Test
-    void defaultServersDoNotShareUserStorage() throws Exception {
+    void explicitMemoryServersDoNotShareUserStorage() throws Exception {
         server.stop();
-        server = new Server();
+        server = new Server(new MemoryDataAccess());
         port = server.run(0);
         assertEquals(200, post("/user", REGISTER).statusCode());
         server.stop();
-        server = new Server();
+        server = new Server(new MemoryDataAccess());
         port = server.run(0);
         assertError(post("/session", LOGIN), 401, "Error: unauthorized");
         assertEquals(200, post("/user", REGISTER).statusCode());

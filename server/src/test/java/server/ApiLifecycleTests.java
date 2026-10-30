@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dataaccess.MemoryDataAccess;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,7 @@ class ApiLifecycleTests {
 
     @BeforeEach
     void setUp() {
-        server = new Server();
+        server = new Server(new MemoryDataAccess());
         port = server.run(0);
         client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
     }
@@ -153,7 +154,7 @@ class ApiLifecycleTests {
         join(old, game, "WHITE");
         assertEquals(1, list(old).size());
         server.stop();
-        server = new Server();
+        server = new Server(new MemoryDataAccess());
         assertEquals(port, server.run(port));
 
         assertRevoked(old, game);

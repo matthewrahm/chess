@@ -2,7 +2,7 @@ package server;
 
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
-import dataaccess.MemoryDataAccess;
+import dataaccess.sql.SqlDataAccess;
 import handler.HttpJson;
 import handler.ClearHandler;
 import handler.GameHandler;
@@ -18,7 +18,15 @@ public class Server {
     private final Javalin javalin;
 
     public Server() {
-        this(new MemoryDataAccess());
+        this(createPersistentStorage());
+    }
+
+    private static DataAccess createPersistentStorage() {
+        try {
+            return new SqlDataAccess();
+        } catch (DataAccessException exception) {
+            throw new IllegalStateException("Unable to initialize server storage", exception);
+        }
     }
 
     public Server(DataAccess dataAccess) {

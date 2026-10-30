@@ -7,7 +7,7 @@ import model.UserData;
 
 import java.util.Collection;
 
-/** Storage operations shared by the memory and future database implementations. */
+/** Storage operations shared by the memory and SQL implementations. */
 public interface DataAccess {
     // Lookups return null when their key is absent, including a missing token.
     UserData getUser(String username) throws DataAccessException;

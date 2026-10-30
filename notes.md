@@ -910,3 +910,35 @@ lifecycle test appropriately. Then validate SQL outages/restarts and final cover
 Public HTTP records/routes are unchanged; SQL methods match existing DataAccess.
 Default Server still uses memory until that integration milestone. No grading
 submission, co-author trailers, or automatic future commits.
+
+
+## October 30 - Phase 4 server integration (milestone 7 of 10)
+
+Added SqlDataAccess as the DataAccess adapter over the existing focused SQL DAOs
+and transactional cleaner. Its constructor initializes the schema. The default
+Server now uses SQL and fails construction if storage cannot initialize; explicit
+DataAccess injection remains available for isolated memory/service/handler tests.
+Updated memory-specific lifecycle tests to request MemoryDataAccess explicitly.
+HTTP routes, request/result records, authentication, and error responses are unchanged.
+
+Activated DatabaseTests without edits after comparing it and StandardAPITests to
+upstream starter revision d3ffc6639e2d78d0e88b3fe899936b995d8614e1 (still current).
+Three facade tests cover automatic setup, persistence across instances, all ten
+DataAccess methods, selective logout, clear visibility, and failed initialization.
+Java 21 `mvn -B clean verify` passed 479 tests with zero failures/errors/skips,
+including all three official database tests and 23 official API tests. SQL package
+line coverage is 166/171 (97.08%); the 80% gate passes. Service lines are 86/86.
+The full suite ran against a unique disposable catalog because official tests
+clear their configured database. Configuration was restored and the catalog removed.
+
+Refreshed the Phase 4 instructions and quality rubric at course revision
+0f715a562a86ef6471f8551c8f2da7d8727dea93. The current instructions now require SQL
+tests in server/src/test/java/dataaccess/sql; move the existing SQL tests and
+fixture there in today's second milestone. The grading table still confirms
+production package dataaccess.sql despite the prose's dataccess spelling typo.
+Reviewed new code for focused responsibilities, simple delegation, cleanup, and
+failure propagation. Whole-project quality review remains milestone 9.
+
+Handoff: main; seven milestones complete. Next today: SQL HTTP outage/recovery and
+restart tests, required test-package relocation, and measured coverage review.
+No grading submission or co-author trailers.

@@ -64,17 +64,17 @@ Edit `db.properties` for your local MySQL account. This file is ignored by Git;
 do not commit database credentials. The example matches a fresh local Homebrew
 installation. The account needs permission to create databases and tables.
 
-The connection manager, idempotent table setup, SQL user creation/lookups, and
-SQL authorization creation/lookups/deletion are implemented and tested against
-MySQL. SQL game creation, lookup, listing, and updates preserve full game JSON.
-Transactional clearing removes users, sessions, and games together; new tables
-explicitly use InnoDB. Server integration is upcoming, so the default server
-currently still uses memory. The official database pass-off tests remain in `starter-code` until
-the SQL implementation is connected to the server. See [notes.md](notes.md) for
-the ten-milestone plan and current verification gaps.
+The default server now uses MySQL through `SqlDataAccess`. Startup creates the
+configured database and missing tables without replacing existing records. Users,
+sessions, player assignments, and full game state persist across server restarts.
+The unmodified official `DatabaseTests` and `StandardAPITests` are active.
+Use `new Server(new MemoryDataAccess())` only when explicitly testing memory storage.
+See [notes.md](notes.md) for the ten-milestone plan and remaining review work.
 
-Run `mvn -B clean verify` with Java 21. Database tests use temporary `chess_test_*`
-catalogs, remove them afterward, and restore the development configuration.
+Run `mvn -B clean verify` with Java 21. Our SQL unit tests use temporary `chess_test_*` catalogs, remove them afterward,
+and restore the original configuration. The official API/database tests clear the
+configured database. Point `db.properties` at a disposable test database before
+running the full suite; restore your development configuration afterward.
 The build generates a coverage report at `server/target/site/jacoco/index.html`
 and fails if line coverage in `dataaccess.sql` is below the course's 80% minimum.
 The target for the completed SQL implementation is at least 90%.
@@ -89,8 +89,8 @@ java -jar server/target/server-test-dependencies.jar
 ```
 
 Open <http://localhost:8080/> for the course-provided web API testing page.
-Stop the server with Ctrl+C. Users, sessions, and games are stored in memory;
-restarting the process or calling `DELETE /db` removes them.
+Stop the server with Ctrl+C. MySQL retains users, sessions, and games across
+restarts. Calling `DELETE /db` removes all application records.
 
 The server implements `POST /user`, `POST /session`, `DELETE /session`,
 `DELETE /db`, and `GET`, `POST`, and `PUT /game`. Protected endpoints use the raw
