@@ -978,3 +978,38 @@ review (including earlier-phase shared code), then final checks and packaged-ser
 persistence verification. Recheck the current instructions and official test revision
 at that point. The previous grader's quality/coverage warnings are historical and
 have not been re-evaluated remotely. No grading submission or co-author trailers.
+
+## October 31 - Phase 4 code-quality review (milestone 9 of 10)
+
+Reviewed the graded production sources across shared chess/model/API types and
+server handlers, services, memory storage, SQL storage, and startup. The SQL DAOs
+already separate users, sessions, games, schema setup, and atomic clearing;
+prepared parameters and try-with-resources remain consistent. HTTP validation and
+error mapping stay outside storage. No interface or schema changes were needed.
+
+Extracted board mutation/simulation into package-private BoardMoves and king attack
+detection into KingSafety. ChessGame now focuses on game history, turn management,
+and legal moves. The move application helper names en-passant removal and castling
+rook movement explicitly. All serialized ChessGame fields and public signatures
+are unchanged, so persisted game JSON retains its existing format. Corrected two
+ChessGame documentation typos. Existing regression tests cover the extracted paths;
+no tests were rewritten to match the refactor.
+
+Java 21 clean verify passed all 490 tests, zero failures/errors/skips. This includes
+26 unchanged official API/database tests and SQL reload tests for special moves.
+SQL coverage remains 166/171 lines (97.08%); service coverage is 86/86. The configured
+80% SQL gate passed. The suite used a disposable catalog; original configuration
+was restored and the temporary catalog dropped. Log: /tmp/chess-phase4/oct31-review.log.
+No Maven WARNING entries were emitted. Diff whitespace checks passed.
+
+Rechecked course revision 0f715a562a86ef6471f8551c8f2da7d8727dea93 and starter
+revision d3ffc6639e2d78d0e88b3fe899936b995d8614e1: unchanged since October 30.
+Fresh downloads of DatabaseTests and StandardAPITests match active files byte for
+byte. SQL tests remain in dataaccess.sql with Test/Tests suffixes. The source review
+is local rubric evidence, not a diagnosis or reversal of the old remote quality
+or coverage feedback. No remote grading submission was made.
+
+Handoff: main; nine of ten milestones complete. Next: verify the packaged server
+in separate JVM processes with isolated MySQL data, finalize setup/readiness docs,
+and push the two final commits. HTTP contracts in shared/request and shared/result
+and the authorization header/error statuses are unchanged.
