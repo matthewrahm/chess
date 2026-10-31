@@ -15,11 +15,11 @@ import static chess.ChessPiece.PieceType.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SqlGameStateTests {
-    private DatabaseTestSupport database;
+    private TestDatabaseSupport database;
 
     @BeforeEach
     void setUp() throws Exception {
-        database = new DatabaseTestSupport();
+        database = new TestDatabaseSupport();
         DatabaseSchema.initialize();
     }
 

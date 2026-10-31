@@ -14,7 +14,7 @@ import java.sql.SQLException;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SqlDatabaseCleanerTests {
-    private DatabaseTestSupport database;
+    private TestDatabaseSupport database;
     private final SqlUserDao users = new SqlUserDao();
     private final SqlAuthDao authorizations = new SqlAuthDao();
     private final SqlGameDao games = new SqlGameDao();
@@ -23,7 +23,7 @@ class SqlDatabaseCleanerTests {
 
     @BeforeEach
     void setUp() throws Exception {
-        database = new DatabaseTestSupport();
+        database = new TestDatabaseSupport();
         DatabaseSchema.initialize();
         users.createUser(new UserData("player", "stored-hash", "player@example.com"));
         authorizations.createAuth(new AuthData("token", "player"));
@@ -57,14 +57,20 @@ class SqlDatabaseCleanerTests {
     @Test
     void laterDeleteFailureRollsBackPreviouslyDeletedAuthorizations() throws Exception {
         execute("""
-                CREATE TRIGGER fail_game_delete BEFORE DELETE ON games FOR EACH ROW
-                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Injected test failure'
+                CREATE TABLE game_references (
+                    game_id INT PRIMARY KEY,
+                    FOREIGN KEY (game_id) REFERENCES games(game_id)
+                ) ENGINE=InnoDB
                 """);
-        var error = assertThrows(DataAccessException.class, cleaner::clear);
-        assertInstanceOf(SQLException.class, error.getCause());
-        assertEquals("45000", ((SQLException) error.getCause()).getSQLState());
-        assertOriginalRecordsPresent();
-        execute("DROP TRIGGER fail_game_delete");
+        try {
+            execute("INSERT INTO game_references VALUES (" + gameID + ")");
+            var error = assertThrows(DataAccessException.class, cleaner::clear);
+            assertInstanceOf(SQLException.class, error.getCause());
+            assertEquals("23000", ((SQLException) error.getCause()).getSQLState());
+            assertOriginalRecordsPresent();
+        } finally {
+            execute("DROP TABLE game_references");
+        }
         assertDoesNotThrow(cleaner::clear);
         assertNull(authorizations.getAuth("token"));
         assertTrue(games.listGames().isEmpty());

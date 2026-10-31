@@ -1,8 +1,6 @@
 package handler;
 
 import chess.ChessGame;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
@@ -15,11 +13,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import server.Server;
 
-import java.net.URI;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Set;
@@ -27,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static handler.TestHttpSupport.*;
 
 class GameHttpTests {
     private MemoryDataAccess data;
@@ -55,19 +52,9 @@ class GameHttpTests {
     }
 
     private HttpResponse<String> sendTo(String method, String path, String auth, String body) throws Exception {
-        var request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
-                .timeout(Duration.ofSeconds(5)).header("Content-Type", "application/json")
-                .method(method, HttpRequest.BodyPublishers.ofString(body));
-        if (auth != null) {
-            request.header("Authorization", auth);
-        }
-        return client.send(request.build(), HttpResponse.BodyHandlers.ofString());
+        return TestHttpSupport.send(client, port, method, path, auth, body);
     }
 
-    private JsonObject json(HttpResponse<String> response) {
-        assertTrue(response.headers().firstValue("content-type").orElse("").startsWith("application/json"));
-        return JsonParser.parseString(response.body()).getAsJsonObject();
-    }
 
     private String register(String username) throws Exception {
         var response = sendTo("POST", "/user", null,

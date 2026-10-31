@@ -16,13 +16,13 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Runs the default SQL server with the same JSON requests a client would send. */
-final class SqlServerTestSupport implements AutoCloseable {
+final class TestSqlServerSupport implements AutoCloseable {
     private final Gson gson = new Gson();
     private final HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
     private Server server;
     private int port;
 
-    SqlServerTestSupport() {
+    TestSqlServerSupport() {
         try {
             server = new Server();
             port = server.run(0);

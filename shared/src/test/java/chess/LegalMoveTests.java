@@ -28,7 +28,9 @@ public class LegalMoveTests {
             for (int col = 1; col <= 8; col++) {
                 ChessPosition position = new ChessPosition(row, col);
                 ChessPiece piece = original.getPiece(position);
-                if (piece == null) continue;
+                if (piece == null) {
+                    continue;
+                }
                 if (piece.getTeamColor() == TeamColor.WHITE) {
                     whiteMoves += game.validMoves(position).size();
                 } else {

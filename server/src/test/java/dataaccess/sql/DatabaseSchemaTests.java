@@ -15,11 +15,11 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 class DatabaseSchemaTests {
-    private DatabaseTestSupport database;
+    private TestDatabaseSupport database;
 
     @BeforeEach
     void setUp() throws Exception {
-        database = new DatabaseTestSupport();
+        database = new TestDatabaseSupport();
     }
 
     @AfterEach

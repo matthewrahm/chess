@@ -3,37 +3,13 @@ package dataaccess.sql;
 import chess.ChessMove;
 import chess.ChessPosition;
 import model.GameData;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class SqlServerPersistenceTests {
-    private DatabaseTestSupport database;
-    private SqlServerTestSupport http;
-
-    @BeforeEach
-    void setUp() throws Exception {
-        database = new DatabaseTestSupport();
-        http = new SqlServerTestSupport();
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        try {
-            if (http != null) {
-                http.close();
-            }
-        } finally {
-            if (database != null) {
-                database.close();
-            }
-        }
-    }
-
+class SqlServerPersistenceTests extends TestSqlServerFixture {
     @Test
     void restartPreservesCredentialsSessionsPlayersAndFullGameState() throws Exception {
         String white = http.register("white");
@@ -90,7 +66,7 @@ class SqlServerPersistenceTests {
     void runningServersShareUpdatesAndSessionRevocations() throws Exception {
         String token = http.register("player");
         int id = http.createGame(token, "Shared");
-        try (var other = new SqlServerTestSupport()) {
+        try (var other = new TestSqlServerSupport()) {
             other.call("PUT", "/game", token, Map.of("gameID", id, "playerColor", "BLACK"), 200);
             var saved = http.call("GET", "/game", token, null, 200)
                     .getAsJsonArray("games").get(0).getAsJsonObject();

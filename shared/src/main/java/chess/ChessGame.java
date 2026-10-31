@@ -57,7 +57,9 @@ public class ChessGame {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
-        if (piece == null) return null;
+        if (piece == null) {
+            return null;
+        }
 
         Collection<ChessMove> candidates = new ArrayList<>(piece.pieceMoves(board, startPosition));
         if (piece.getPieceType() == ChessPiece.PieceType.KING) {
@@ -68,7 +70,9 @@ public class ChessGame {
         Collection<ChessMove> moves = new ArrayList<>();
         for (ChessMove move : candidates) {
             ChessPiece target = board.getPiece(move.getEndPosition());
-            if (target != null && target.getPieceType() == ChessPiece.PieceType.KING) continue;
+            if (target != null && target.getPieceType() == ChessPiece.PieceType.KING) {
+                continue;
+            }
             ChessBoard nextBoard = simulateMove(move);
             if (!KingSafety.isInCheck(nextBoard, piece.getTeamColor())) {
                 moves.add(move);
@@ -185,10 +189,14 @@ public class ChessGame {
         int captureRow = color == TeamColor.WHITE ? 5 : 4;
         if (enPassantPawn == null || start.getRow() != captureRow
                 || enPassantPawn.getRow() != start.getRow()
-                || Math.abs(enPassantPawn.getColumn() - start.getColumn()) != 1) return;
+                || Math.abs(enPassantPawn.getColumn() - start.getColumn()) != 1) {
+            return;
+        }
         ChessPiece pawn = board.getPiece(enPassantPawn);
         if (pawn == null || pawn.getPieceType() != ChessPiece.PieceType.PAWN
-                || pawn.getTeamColor() == color) return;
+                || pawn.getTeamColor() == color) {
+            return;
+        }
         int direction = color == TeamColor.WHITE ? 1 : -1;
         ChessPosition end = new ChessPosition(start.getRow() + direction, enPassantPawn.getColumn());
         if (board.getPiece(end) == null) {
@@ -198,14 +206,20 @@ public class ChessGame {
 
     private void addCastlingMoves(ChessPosition start, TeamColor color, Collection<ChessMove> moves) {
         int row = color == TeamColor.WHITE ? 1 : 8;
-        if (!start.equals(new ChessPosition(row, 5)) || isInCheck(color)) return;
+        if (!start.equals(new ChessPosition(row, 5)) || isInCheck(color)) {
+            return;
+        }
 
         for (int side = 0; side < 2; side++) {
-            if (!castlingRights[color.ordinal()][side]) continue;
+            if (!castlingRights[color.ordinal()][side]) {
+                continue;
+            }
             int rookCol = side == 0 ? 1 : 8;
             ChessPiece rook = board.getPiece(new ChessPosition(row, rookCol));
             if (rook == null || rook.getTeamColor() != color
-                    || rook.getPieceType() != ChessPiece.PieceType.ROOK) continue;
+                    || rook.getPieceType() != ChessPiece.PieceType.ROOK) {
+                continue;
+            }
             int direction = side == 0 ? -1 : 1;
             boolean clear = true;
             for (int col = 5 + direction; col != rookCol; col += direction) {
@@ -214,7 +228,9 @@ public class ChessGame {
                     break;
                 }
             }
-            if (!clear) continue;
+            if (!clear) {
+                continue;
+            }
             ChessMove step = new ChessMove(start, new ChessPosition(row, 5 + direction), null);
             if (!KingSafety.isInCheck(simulateMove(step), color)) {
                 moves.add(new ChessMove(start, new ChessPosition(row, 5 + 2 * direction), null));
@@ -239,8 +255,12 @@ public class ChessGame {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         ChessGame that = (ChessGame) o;
         return teamTurn == that.teamTurn && Objects.equals(board, that.board)
                 && Arrays.deepEquals(castlingRights, that.castlingRights)

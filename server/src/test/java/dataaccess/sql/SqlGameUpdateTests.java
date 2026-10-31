@@ -15,13 +15,13 @@ import java.sql.SQLException;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SqlGameUpdateTests {
-    private DatabaseTestSupport database;
+    private TestDatabaseSupport database;
     private SqlGameDao games;
     private int gameID;
 
     @BeforeEach
     void setUp() throws Exception {
-        database = new DatabaseTestSupport();
+        database = new TestDatabaseSupport();
         DatabaseSchema.initialize();
         games = new SqlGameDao();
         gameID = games.createGame("Original", new ChessGame());

@@ -62,25 +62,64 @@ cp server/src/main/resources/db.properties.example server/src/main/resources/db.
 
 Edit `db.properties` for your local MySQL account. This file is ignored by Git;
 do not commit database credentials. The example matches a fresh local Homebrew
-installation. The account needs permission to create databases and tables.
+installation. The account needs privileges on the configured database and its tables; it does
+not need access to other databases.
 
 The default server now uses MySQL through `SqlDataAccess`. Startup creates the
 configured database and missing tables without replacing existing records. Users,
 sessions, player assignments, and full game state persist across server restarts.
 The unmodified official `DatabaseTests` and `StandardAPITests` are active.
 Use `new Server(new MemoryDataAccess())` only when explicitly testing memory storage.
-All ten Phase 4 milestones are complete. See [notes.md](notes.md) for the
-implementation history, final review, and verification evidence.
+See [notes.md](notes.md) for the implementation history, the October 31 grading
+failure investigation, and the corrected verification evidence.
 
-Run `mvn -B clean verify` with Java 21. Our SQL tests in `server/src/test/java/dataaccess/sql` use temporary `chess_test_*` catalogs, remove them afterward,
-and restore the original configuration. The official API/database tests clear the
-configured database. Point `db.properties` at a disposable test database before
-running the full suite; restore your development configuration afterward.
-The build generates a coverage report at `server/target/site/jacoco/index.html`
-and fails if line coverage in `dataaccess.sql` is below the course's 80% minimum.
-The final October 31 run passed 490 tests, including all 26 supplied API/database
-cases and 84 SQL cases. SQL line coverage was 166/171 (97.08%); service line
-coverage was 86/86. These are local results, not a submitted or awarded grade.
+Run `mvn -B clean verify` with Java 21 against a disposable database.
+The SQL tests reset application tables in the database named in `db.properties`;
+they do not create arbitrary catalogs. Both these tests and the official API tests
+clear configured data. Do not point a test run at a development database you want
+to preserve. The build requires at least 80% line coverage in `dataaccess.sql` and
+writes its report to `server/target/site/jacoco/index.html`.
+
+For isolated verification without changing local configuration or development data:
+
+```sh
+python3 scripts/verify_tests.py --output /tmp/chess-verification
+```
+
+Use a new output directory for each run, set `JAVA_HOME` to Java 21, and put Maven
+and the MySQL CLI on PATH (or pass `--mysql /path/to/mysql`). The script uses the
+local MySQL administrator only to provision and clean up a temporary account with
+privileges on one random database. Tests run in a copied checkout under that
+restricted account, and an explicit negative check verifies that the account
+cannot create another database. Administrator defaults are `root` at
+`127.0.0.1:3306`; CLI option files can supply credentials. Logs and reports remain
+in the output directory; the temporary checkout, database, and account are removed.
+
+After the October 31 corrections, all 490 tests pass with these restricted
+permissions, including the 26 official API/database cases and 84 SQL cases. Using
+the public grader's JUnit/JaCoCo tools on `dataaccess` alone also passes all 96 cases
+and measures 166/171 SQL lines (97.08%). The public course Checkstyle tool reports
+zero errors or warnings across shared, server, and client sources and tests.
+These are local checks; the corrected commit has not yet been graded remotely.
+The earlier submission at `8d3b4f` earned 69.35%, despite passing functionality.
+
+To reproduce the separate grader-tool check, use the `phases/libs` directory from
+[the public autograder](https://github.com/softwareconstruction240/autograder/tree/a1cc752ffb51a8b15400bd4fed8ee2ba978885a9/src/main/resources/phases/libs):
+
+```sh
+python3 scripts/verify_tests.py --output /tmp/chess-grader-check \
+  --grader-libs /path/to/autograder/src/main/resources/phases/libs \
+  --grader-java /path/to/java
+```
+
+This mode builds the artifact and runs only the grader's `dataaccess` selection,
+with its bundled JUnit and JaCoCo. The recorded run used Java 26 for those tools
+and Java 21 for compilation. The quality check is separate:
+
+```sh
+/path/to/java -jar /path/to/autograder/src/main/resources/phases/libs/checkstyle-1.0.9.jar \
+  -c cs240_checks.xml shared server client
+```
 
 To verify the executable server across separate JVM restarts after packaging:
 
@@ -95,7 +134,9 @@ checks four separate JVM launches. It verifies persistent credentials, sessions,
 games, player assignments and generated IDs, as well as durable logout and clear.
 It stops its own server and drops only its temporary catalog afterward. The
 original JAR, local configuration, and development database are not modified.
-Optional `--jar` and `--config` arguments select other local inputs.
+Optional `--jar` and `--config` arguments select other local inputs. This older
+packaged-restart script requires an account permitted to create its temporary
+catalog; use `verify_tests.py` for the database privilege compatibility check.
 
 After running a full Maven suite against a disposable configuration, restore the
 normal local configuration and run `mvn -B -DskipTests package` before launching

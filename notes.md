@@ -1049,3 +1049,63 @@ with final documentation. Existing HTTP endpoints, request/result records, raw
 authorization header, and error statuses are unchanged; no UI integration change
 is required. Next step is the user's Phase 4 grading submission at cs240.click.
 No grading submission was performed and no co-author trailers were added.
+
+
+## October 31 - Repair Phase 4 grading compatibility
+
+Remote submission 8d3b4f earned 69.35%: functionality 100/100, quality 7.5/30,
+unit tests 0/25. The earlier readiness review was insufficient. Root-level local
+MySQL permissions hid a fixture bug: DatabaseTestSupport replaced the assigned
+catalog with chess_test_UUID. The grader grants ALL only on its configured
+catalog, so all 84 SQL tests failed with access denied, leaving 10/171 lines
+covered. The failures were in setup/cleanup, not 84 independent DAO defects.
+
+Tests now use the configured database and reset only application tables before
+and after each test. Missing-catalog testing only attempts a connection to a
+nonexistent catalog; it never creates or drops it. Helpers are named
+TestDatabaseSupport/TestSqlServerSupport to meet the verifier's Test-prefix rule.
+The first restricted run caught an additional trigger/SUPER privilege dependency.
+The rollback test now uses a foreign-key restriction to fail the second delete,
+verifies the earlier authorization delete was rolled back, and removes its helper
+table in finally. No test cases were removed or skipped.
+
+Ran the actual public grader Checkstyle JAR, instead of relying on manual review.
+It reproduced the failing quality categories: 23 missing-brace errors, two
+repeated HTTP helper blocks, one repeated SQL server lifecycle block, and 16 files
+in chess (limit 15). Added braces, extracted TestHttpSupport/TestSqlServerFixture,
+and grouped the eight movement-calculator files in chess.moves. Required chess
+model classes, public model signatures, serialized fields, SQL schema, and HTTP
+contracts remain unchanged. Six concrete calculators are now public so ChessPiece
+can use that cohesive subpackage.
+
+Added scripts/verify_tests.py. It copies tracked/unignored source into a temporary
+checkout, grants a fresh account access to exactly one disposable database, first
+verifies that creating a different database is denied, then runs Maven. Optional
+--grader-libs uses the public grader's JUnit/JaCoCo package selection instead.
+Provisioning and cleanup use the local administrator; tests never do. The source
+checkout, its db.properties, and its existing target artifacts are unchanged.
+
+Checks actually run after repairs:
+- Java 21 clean verify under restricted MySQL permissions: 490 tests, zero
+  failures/errors/skips; 26 official API/database cases and all 84 SQL cases pass.
+  SQL coverage 166/171 = 97.08%; 80% Maven gate passes.
+  Evidence: /tmp/chess-phase4/restricted-oct31-fixed/.
+- Public JUnit console/JaCoCo on Java 26, selecting dataaccess only, with a fresh
+  restricted account: 96 tests passed, zero failed/aborted/skipped; SQL coverage
+  166/171 = 97.08%. Evidence: /tmp/chess-phase4/grader-tools-oct31/.
+- Public checkstyle-1.0.9.jar with bundled cs240_checks.xml over shared/server/client:
+  zero errors/warnings. Evidence: /tmp/chess-phase4/oct31-quality-final.log.
+  Tools and verifier source pinned to autograder a1cc752ffb51a8b15400bd4fed8ee2ba978885a9.
+
+The public CodeCoverageVerifier incorrectly tests a directory literally named
+"dataaccess.sql" at repository root. The correct production/test package paths
+exist, and the grader's own posted coverage lists all seven SQL classes. Do not
+create a dummy directory to silence that preliminary warning. Actual coverage is
+computed separately by CoverageAnalyzer from JaCoCo data. The warning may persist
+until the grader fixes that path check; it did not cause the access-denied errors.
+
+Handoff: main. Corrected code is locally verified using restricted permissions
+and public grading tools; a new remote grade remains unverified. Next step is the
+user's Phase 4 resubmission and review of its actual score/details. No grading
+submission performed. This repairs verification gaps; it does not guarantee a
+particular remote score. No frontend interface changes or co-author trailers.

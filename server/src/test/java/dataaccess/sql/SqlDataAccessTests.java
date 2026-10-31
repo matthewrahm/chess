@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class SqlDataAccessTests {
     @Test
     void initializesStorageAndSharesRecordsAcrossInstances() throws Exception {
-        try (var database = new DatabaseTestSupport()) {
+        try (var database = new TestDatabaseSupport()) {
             DataAccess first = new SqlDataAccess();
             var user = new UserData("player", "stored-hash", "player@example.com");
             var auth = new AuthData("token", "player");
@@ -38,7 +38,7 @@ class SqlDataAccessTests {
 
     @Test
     void logoutAndClearAreVisibleToExistingInstances() throws Exception {
-        try (var database = new DatabaseTestSupport()) {
+        try (var database = new TestDatabaseSupport()) {
             DataAccess first = new SqlDataAccess();
             DataAccess second = new SqlDataAccess();
             first.createUser(new UserData("player", "stored-hash", "player@example.com"));
@@ -63,7 +63,7 @@ class SqlDataAccessTests {
 
     @Test
     void failedInitializationDoesNotCreateUsableStorage() throws Exception {
-        try (var database = new DatabaseTestSupport()) {
+        try (var database = new TestDatabaseSupport()) {
             database.configureUnavailableServer();
             assertThrows(DataAccessException.class, SqlDataAccess::new);
             database.configureDatabase(database.databaseName());

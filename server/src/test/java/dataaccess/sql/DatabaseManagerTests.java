@@ -5,13 +5,14 @@ import dataaccess.DatabaseManager;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class DatabaseManagerTests {
     @Test
     void createsDatabaseAndSelectsItOnIndependentConnections() throws Exception {
-        try (var database = new DatabaseTestSupport()) {
+        try (var database = new TestDatabaseSupport()) {
             DatabaseManager.createDatabase();
             DatabaseManager.createDatabase();
             try (var first = DatabaseManager.getConnection();
@@ -30,7 +31,7 @@ class DatabaseManagerTests {
 
     @Test
     void unavailableServerProducesStorageErrorsAndConfigurationCanRecover() throws Exception {
-        try (var database = new DatabaseTestSupport()) {
+        try (var database = new TestDatabaseSupport()) {
             database.configureUnavailableServer();
             var creation = assertThrows(DataAccessException.class, DatabaseManager::createDatabase);
             var connection = assertThrows(DataAccessException.class, DatabaseManager::getConnection);
@@ -43,10 +44,12 @@ class DatabaseManagerTests {
 
     @Test
     void missingCatalogProducesStorageErrorInsteadOfUsingAnotherDatabase() throws Exception {
-        try (var database = new DatabaseTestSupport()) {
+        try (var database = new TestDatabaseSupport()) {
+            String missingDatabase = "chess_missing_" + UUID.randomUUID().toString().replace("-", "");
+            database.configureDatabase(missingDatabase);
             var error = assertThrows(DataAccessException.class, DatabaseManager::getConnection);
             assertInstanceOf(SQLException.class, error.getCause());
-            assertTrue(error.getCause().getMessage().contains(database.databaseName()));
+            assertTrue(error.getCause().getMessage().contains(missingDatabase));
         }
     }
 }

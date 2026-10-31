@@ -1,8 +1,6 @@
 package handler;
 
 import chess.ChessGame;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
@@ -16,14 +14,13 @@ import server.Server;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
-import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static handler.TestHttpSupport.*;
 
 class SessionClearHttpTests {
     private static final String REGISTER = """
@@ -56,31 +53,15 @@ class SessionClearHttpTests {
     }
 
     private HttpResponse<String> send(String method, String path, String auth, String body) throws Exception {
-        var request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
-                .timeout(Duration.ofSeconds(5)).header("Content-Type", "application/json")
-                .method(method, HttpRequest.BodyPublishers.ofString(body));
-        if (auth != null) {
-            request.header("Authorization", auth);
-        }
-        return client.send(request.build(), HttpResponse.BodyHandlers.ofString());
+        return TestHttpSupport.send(client, port, method, path, auth, body);
     }
 
-    private JsonObject json(HttpResponse<String> response) {
-        assertTrue(response.headers().firstValue("content-type").orElse("").startsWith("application/json"));
-        return JsonParser.parseString(response.body()).getAsJsonObject();
-    }
 
     private void assertEmptySuccess(HttpResponse<String> response) {
         assertEquals(200, response.statusCode(), response.body());
         assertEquals(Set.of(), json(response).keySet());
     }
 
-    private void assertError(HttpResponse<String> response, int status, String message) {
-        assertEquals(status, response.statusCode(), response.body());
-        var result = json(response);
-        assertEquals(Set.of("message"), result.keySet());
-        assertEquals(message, result.get("message").getAsString());
-    }
 
     private String login() throws Exception {
         var response = send("POST", "/session", null, LOGIN);

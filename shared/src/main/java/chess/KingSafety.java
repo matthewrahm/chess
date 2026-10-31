@@ -9,16 +9,22 @@ final class KingSafety {
 
     static boolean isInCheck(ChessBoard board, TeamColor teamColor) {
         ChessPosition king = findKing(board, teamColor);
-        if (king == null) return false;
+        if (king == null) {
+            return false;
+        }
 
         for (int row = 1; row <= 8; row++) {
             for (int col = 1; col <= 8; col++) {
                 ChessPosition position = new ChessPosition(row, col);
                 ChessPiece piece = board.getPiece(position);
-                if (piece == null || piece.getTeamColor() == teamColor) continue;
+                if (piece == null || piece.getTeamColor() == teamColor) {
+                    continue;
+                }
 
                 for (ChessMove move : piece.pieceMoves(board, position)) {
-                    if (move.getEndPosition().equals(king)) return true;
+                    if (move.getEndPosition().equals(king)) {
+                        return true;
+                    }
                 }
             }
         }

@@ -17,12 +17,12 @@ import java.sql.SQLException;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SqlUserDaoTests {
-    private DatabaseTestSupport database;
+    private TestDatabaseSupport database;
     private SqlUserDao users;
 
     @BeforeEach
     void setUp() throws Exception {
-        database = new DatabaseTestSupport();
+        database = new TestDatabaseSupport();
         DatabaseSchema.initialize();
         users = new SqlUserDao();
     }

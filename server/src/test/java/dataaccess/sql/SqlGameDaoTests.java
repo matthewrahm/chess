@@ -19,12 +19,12 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 class SqlGameDaoTests {
-    private DatabaseTestSupport database;
+    private TestDatabaseSupport database;
     private SqlGameDao games;
 
     @BeforeEach
     void setUp() throws Exception {
-        database = new DatabaseTestSupport();
+        database = new TestDatabaseSupport();
         DatabaseSchema.initialize();
         games = new SqlGameDao();
     }

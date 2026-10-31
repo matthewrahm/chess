@@ -76,7 +76,9 @@ public class MoveExecutionTests {
                     board.addPiece(new ChessPosition(1, 1), new ChessPiece(TeamColor.WHITE, PieceType.KING));
                     board.addPiece(new ChessPosition(8, 8), new ChessPiece(TeamColor.BLACK, PieceType.KING));
                     board.addPiece(start, new ChessPiece(color, PieceType.PAWN));
-                    if (capture) board.addPiece(end, new ChessPiece(opponent, PieceType.KNIGHT));
+                    if (capture) {
+                        board.addPiece(end, new ChessPiece(opponent, PieceType.KNIGHT));
+                    }
                     game.setBoard(board);
                     game.setTeamTurn(color);
 

@@ -3,25 +3,28 @@ package dataaccess.sql;
 import dataaccess.DatabaseManager;
 
 import java.lang.reflect.Method;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.Properties;
-import java.util.UUID;
 
-/** Gives SQL tests an isolated catalog without changing the development database. */
-final class DatabaseTestSupport implements AutoCloseable {
+/**
+ * Resets the application tables inside the configured test database.
+ * Use a disposable database in db.properties: tests intentionally clear its tables.
+ * The grader grants access only to that configured database.
+ */
+final class TestDatabaseSupport implements AutoCloseable {
     private final Properties original = new Properties();
-    private final String databaseName = "chess_test_" + UUID.randomUUID().toString().replace("-", "");
+    private final String databaseName;
 
-    DatabaseTestSupport() throws Exception {
+    TestDatabaseSupport() throws Exception {
         try (var stream = getClass().getClassLoader().getResourceAsStream("db.properties")) {
             if (stream == null) {
                 throw new IllegalStateException("Copy db.properties.example to db.properties before testing");
             }
             original.load(stream);
         }
-        configureDatabase(databaseName);
+        databaseName = original.getProperty("db.name");
+        configure(original);
+        DatabaseManager.createDatabase();
+        resetTables();
     }
 
     String databaseName() {
@@ -48,17 +51,17 @@ final class DatabaseTestSupport implements AutoCloseable {
         method.invoke(null, properties);
     }
 
-    private Connection adminConnection() throws SQLException {
-        String url = "jdbc:mysql://" + original.getProperty("db.host") + ":" + original.getProperty("db.port");
-        return DriverManager.getConnection(url, original.getProperty("db.user"), original.getProperty("db.password"));
+    private void resetTables() throws Exception {
+        try (var connection = DatabaseManager.getConnection(); var statement = connection.createStatement()) {
+            statement.executeUpdate("DROP TABLE IF EXISTS authorizations");
+            statement.executeUpdate("DROP TABLE IF EXISTS games");
+            statement.executeUpdate("DROP TABLE IF EXISTS users");
+        }
     }
 
     @Override
     public void close() throws Exception {
-        try (var connection = adminConnection(); var statement = connection.createStatement()) {
-            statement.executeUpdate("DROP DATABASE IF EXISTS `" + databaseName + "`");
-        } finally {
-            configure(original);
-        }
+        configure(original);
+        resetTables();
     }
 }

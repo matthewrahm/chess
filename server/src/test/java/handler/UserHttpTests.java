@@ -1,7 +1,6 @@
 package handler;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
 import model.AuthData;
@@ -14,9 +13,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mindrot.jbcrypt.BCrypt;
 import server.Server;
 
-import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Set;
@@ -24,6 +21,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static handler.TestHttpSupport.*;
 
 class UserHttpTests {
     private static final String REGISTER = """
@@ -52,23 +50,10 @@ class UserHttpTests {
     }
 
     private HttpResponse<String> post(String path, String body) throws Exception {
-        var request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
-                .timeout(Duration.ofSeconds(5)).header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(body)).build();
-        return client.send(request, HttpResponse.BodyHandlers.ofString());
+        return TestHttpSupport.send(client, port, "POST", path, null, body);
     }
 
-    private JsonObject json(HttpResponse<String> response) {
-        assertTrue(response.headers().firstValue("content-type").orElse("").startsWith("application/json"));
-        return JsonParser.parseString(response.body()).getAsJsonObject();
-    }
 
-    private void assertError(HttpResponse<String> response, int status, String message) {
-        assertEquals(status, response.statusCode(), response.body());
-        var result = json(response);
-        assertEquals(Set.of("message"), result.keySet());
-        assertEquals(message, result.get("message").getAsString());
-    }
 
     @Test
     void registerAndLoginReturnIndependentStoredTokensWithoutPrivateFields() throws Exception {

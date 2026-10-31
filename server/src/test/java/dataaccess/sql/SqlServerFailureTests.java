@@ -1,8 +1,6 @@
 package dataaccess.sql;
 
 import dataaccess.DataAccessException;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -12,29 +10,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class SqlServerFailureTests {
-    private DatabaseTestSupport database;
-    private SqlServerTestSupport http;
-
-    @BeforeEach
-    void setUp() throws Exception {
-        database = new DatabaseTestSupport();
-        http = new SqlServerTestSupport();
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        try {
-            if (http != null) {
-                http.close();
-            }
-        } finally {
-            if (database != null) {
-                database.close();
-            }
-        }
-    }
-
+class SqlServerFailureTests extends TestSqlServerFixture {
     @ParameterizedTest
     @ValueSource(strings = {"register", "login", "logout", "create", "list", "join", "clear"})
     void databaseOutageReturnsSafeErrorsAndSameServerRecovers(String operation) throws Exception {
