@@ -51,7 +51,7 @@ java -jar client/target/client-jar-with-dependencies.jar
 ♕ 240 Chess Client: chess.ChessPiece@7852e922
 ```
 
-## Phase 4: Database setup (in progress)
+## Phase 4: Persistent database
 
 Install MySQL 8.4 LTS and start it before running the database tests. On macOS
 with Homebrew, use `brew services start mysql@8.4`. Create your local configuration:
@@ -69,7 +69,8 @@ configured database and missing tables without replacing existing records. Users
 sessions, player assignments, and full game state persist across server restarts.
 The unmodified official `DatabaseTests` and `StandardAPITests` are active.
 Use `new Server(new MemoryDataAccess())` only when explicitly testing memory storage.
-See [notes.md](notes.md) for the ten-milestone plan and remaining review work.
+All ten Phase 4 milestones are complete. See [notes.md](notes.md) for the
+implementation history, final review, and verification evidence.
 
 Run `mvn -B clean verify` with Java 21. Our SQL tests in `server/src/test/java/dataaccess/sql` use temporary `chess_test_*` catalogs, remove them afterward,
 and restore the original configuration. The official API/database tests clear the
@@ -77,7 +78,28 @@ configured database. Point `db.properties` at a disposable test database before
 running the full suite; restore your development configuration afterward.
 The build generates a coverage report at `server/target/site/jacoco/index.html`
 and fails if line coverage in `dataaccess.sql` is below the course's 80% minimum.
-The target for the completed SQL implementation is at least 90%.
+The final October 31 run passed 490 tests, including all 26 supplied API/database
+cases and 84 SQL cases. SQL line coverage was 166/171 (97.08%); service line
+coverage was 86/86. These are local results, not a submitted or awarded grade.
+
+To verify the executable server across separate JVM restarts after packaging:
+
+```sh
+python3 scripts/verify_packaged_server.py
+```
+
+Use Java 21 (`JAVA_HOME` or `java` on PATH), keep MySQL running, and leave port
+8080 free. The script copies the packaged JAR into a private temporary directory,
+replaces only its database configuration with a unique disposable catalog, then
+checks four separate JVM launches. It verifies persistent credentials, sessions,
+games, player assignments and generated IDs, as well as durable logout and clear.
+It stops its own server and drops only its temporary catalog afterward. The
+original JAR, local configuration, and development database are not modified.
+Optional `--jar` and `--config` arguments select other local inputs.
+
+After running a full Maven suite against a disposable configuration, restore the
+normal local configuration and run `mvn -B -DskipTests package` before launching
+the development JAR; this puts the restored configuration into the artifact.
 
 ## Phase 3: Chess Web API
 

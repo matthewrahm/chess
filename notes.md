@@ -1013,3 +1013,39 @@ Handoff: main; nine of ten milestones complete. Next: verify the packaged server
 in separate JVM processes with isolated MySQL data, finalize setup/readiness docs,
 and push the two final commits. HTTP contracts in shared/request and shared/result
 and the authorization header/error statuses are unchanged.
+
+## October 31 - Phase 4 final verification (milestone 10 of 10)
+
+Added scripts/verify_packaged_server.py, a reproducible standalone-JAR check using
+four separate JVM launches and a unique disposable MySQL catalog. It copies the
+artifact and substitutes only the catalog configuration; it never rewrites the
+original JAR or local db.properties. A JDBC cleanup helper checks the generated
+catalog name before dropping it. Only the subprocess owned by the script is stopped.
+README now describes completed Phase 4 behavior, measured checks, isolated testing,
+the restart script, and restoring/repackaging local configuration after Maven tests.
+
+The packaged check passed: credentials, independent sessions, game metadata,
+player seats, and generated IDs persist; logout survives the next JVM while another
+user remains authorized; clear removes users, tokens, and games after another
+restart. A newly registered user then sees an empty list. The stronger in-process
+SQL tests already verify complete moved-board and special-move state persistence.
+Log: /tmp/chess-phase4/oct31-packaged-restart.log.
+
+Final verification of the production refactor is the October 31 clean verify run:
+490 tests, zero failures/errors/skips, 84 SQL cases, 26 official API/database cases,
+97.08% SQL line coverage and 100% service line coverage. The 80% build gate passes.
+No production code changed after that successful run. Repackaging with restored
+configuration passed without rerunning tests; confirmed packaged db.properties
+matches the local file byte-for-byte and the new helper classes are in the JAR.
+No chess_test_*, chess_verify_*, or chess_package_* catalogs remain. SQL test names,
+packages, and assertions were reviewed; diff whitespace checks pass. Official
+sources still match starter d3ffc6639e2d78d0e88b3fe899936b995d8614e1, with course
+requirements at 0f715a562a86ef6471f8551c8f2da7d8727dea93. No grading warning was emitted
+locally; prior remote quality/coverage feedback has not been re-evaluated remotely.
+
+Handoff: main; all ten planned Phase 4 milestones are complete. The final two
+commits contain the source decomposition/review and the packaged restart check
+with final documentation. Existing HTTP endpoints, request/result records, raw
+authorization header, and error statuses are unchanged; no UI integration change
+is required. Next step is the user's Phase 4 grading submission at cs240.click.
+No grading submission was performed and no co-author trailers were added.
