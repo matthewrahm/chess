@@ -1132,3 +1132,86 @@ removed; local database configuration and development data were untouched.
 Handoff: main. This follow-up makes the verification command enforce the coverage
 requirement itself. New remote grading remains unverified; next step is the
 user's Phase 4 resubmission with the new commit. No grading submission performed.
+
+
+## November 1 - Phase 5 setup and daily milestones
+
+Objective: complete Chess Pregame by Friday, November 13, 2026. Target about one
+focused commit per day from November 1 through November 12, leaving November 13
+as a buffer. Commit completed work using the existing repository identity and
+actual dates, with no co-author trailers. Additional fixes can warrant a commit;
+do not create empty commits or rewrite dates to satisfy the history requirement.
+This is a work plan, not an automatic daily job.
+
+Current scope on main: copied the two official Phase 5 starter files unchanged:
+`client/src/main/java/ui/EscapeSequences.java` and
+`client/src/test/java/client/ServerFacadeTests.java`. Source: softwareconstruction240/chess
+revision `d3ffc6639e2d78d0e88b3fe899936b995d8614e1`, verified against upstream HEAD
+on November 1. The starter test starts/stops a real server on a random port, but
+its `sampleTest` only asserts true. It is scaffolding, not facade behavior or
+coverage evidence. The facade and client interactions are not implemented yet.
+
+### Daily commit targets
+
+| Date | Focused milestone |
+| --- | --- |
+| Nov 1 | Official client UI and test starter setup, daily plan |
+| Nov 2 | HTTP facade foundation, dynamic port, clear operation and isolated test setup |
+| Nov 3 | Registration request, response, positive and negative tests |
+| Nov 4 | Login/logout requests, session handling, positive and negative tests |
+| Nov 5 | Create-game request and positive and negative tests |
+| Nov 6 | List-games request and positive and negative tests |
+| Nov 7 | Join-game request and positive and negative tests |
+| Nov 8 | Prelogin command loop, help, registration, login, quit |
+| Nov 9 | Postlogin commands, numbered game list and internal ID mapping |
+| Nov 10 | Board renderer, square colors, coordinates, both perspectives |
+| Nov 11 | Play/observe flows, exit paths, invalid input and network recovery |
+| Nov 12 | Final verification and corrections; remote grading and TA pass-off target |
+
+Keep tests alongside each feature. Replace the starter placeholder with meaningful
+assertions as the facade is implemented. Add a class-level coverage gate with the
+facade foundation and extend the existing verifier for client tests. Aim for at
+least 90% ServerFacade line coverage; the required minimum is 80%. Finish each
+small milestone before committing; revise dates honestly if the work slips.
+Arrange the TA meeting early enough to complete pass-off before November 13.
+
+### Proposed structure and completion checks
+
+Keep console input/menu state, board rendering, and HTTP/JSON work separate.
+`ServerFacade` will accept the actual server port. Reuse existing shared models
+and the current server API; no server interface changes are part of this setup.
+Preserve tokens and database IDs internally. Registration signs the user in;
+creating a game does not join it. Map displayed list numbers to real IDs. Draw
+only the selected perspective, using white for observers. Gameplay stays in Phase 6.
+
+Before calling Phase 5 ready, verify each grading category independently:
+
+- At least 12 meaningful commits throughout the assignment, over multiple days.
+- All existing tests plus facade positive/negative cases pass with real HTTP,
+  random ports, a clean test database per case, and restricted database permissions.
+- Measure ServerFacade coverage specifically. The existing public-grader mode
+  in `scripts/verify_tests.py` currently selects only dataaccess and checks SQL.
+- Run the official quality checker across the whole project, then manually review
+  responsibilities, duplication, readability and packages.
+- Run packaged client/server programs and walk through every command, both board
+  orientations, invalid input, occupied seats, failed login, and server outage.
+- Verify the actual remote Phase 5 result, then demonstrate functionality to a TA.
+  Local tests alone do not establish a remote score or completed TA pass-off.
+
+Sources: [Phase 5 requirements](https://masteryls.com/course/7b46ce1a-2b79-4455-b706-aea79f1b51ac/topic/a9c3b3e6-bfe7-4247-a034-a08adbf35334),
+[getting started](https://masteryls.com/course/7b46ce1a-2b79-4455-b706-aea79f1b51ac/topic/2f9040df-795b-4847-bfe2-ac3d8de10d0b),
+and [Fall 2026 schedule](https://masteryls.com/course/7b46ce1a-2b79-4455-b706-aea79f1b51ac/schedule).
+
+Handoff: main. Next milestone is the HTTP facade foundation and isolated test
+setup on November 2. Phase 4 remote resubmission remains unverified. No autograder
+submission or Phase 5 course acknowledgement was performed during setup.
+
+Setup verification: `scripts/verify_tests.py` completed a fresh clean Maven verify
+in an isolated checkout with restricted database permissions: 491 tests passed,
+zero failures/errors/skips. This includes 490 existing tests and the one official
+placeholder test. Existing SQL coverage remained 166/171 (97.08%); no facade
+coverage exists yet. Reports: `/tmp/chess-phase5/nov01-setup/`. The course
+Checkstyle 1.0.9 checker reported zero errors/warnings across shared, server and
+client. Both starter files match the pinned upstream files byte for byte.
+Temporary verification databases/accounts were removed; development data and
+configuration were untouched.
