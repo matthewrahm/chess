@@ -113,7 +113,8 @@ python3 scripts/verify_tests.py --output /tmp/chess-grader-check \
 ```
 
 This mode builds the artifact and runs only the grader's `dataaccess` selection,
-with its bundled JUnit and JaCoCo. The recorded run used Java 26 for those tools
+with its bundled JUnit and JaCoCo. It exits unsuccessfully if tests fail, SQL
+coverage is missing, or SQL line coverage is below 80%. The recorded run used Java 26 for those tools
 and Java 21 for compilation. The quality check is separate:
 
 ```sh

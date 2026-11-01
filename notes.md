@@ -1109,3 +1109,26 @@ and public grading tools; a new remote grade remains unverified. Next step is th
 user's Phase 4 resubmission and review of its actual score/details. No grading
 submission performed. This repairs verification gaps; it does not guarantee a
 particular remote score. No frontend interface changes or co-author trailers.
+
+
+## November 1 - Enforce coverage in the grader-tool verification command
+
+Added an explicit 80% SQL line-coverage gate to scripts/verify_tests.py's
+--grader-libs mode. Previously this mode returned the JUnit exit status even if
+coverage was missing or too low. It now rejects missing/empty SQL coverage and
+sub-threshold coverage while preserving test failure exit codes. No application
+code, API contracts, or test cases changed.
+
+Fresh checks on main: all 490 tests passed under a restricted database account,
+zero failures/errors/skips; SQL coverage 166/171 (97.08%). The public grader tools
+separately passed all 96 dataaccess tests at the same coverage. The course quality
+checker reports zero errors/warnings. Coverage-gate checks exercised exactly 80%,
+79%, zero measured lines, and a missing SQL package; all four behaved as expected.
+Evidence: /tmp/chess-phase4/nov01-full/, /tmp/chess-phase4/nov01-grader/,
+and /tmp/chess-phase4/nov01-quality.log. Public tools remain pinned to autograder
+revision a1cc752ffb51a8b15400bd4fed8ee2ba978885a9. Temporary databases/accounts were
+removed; local database configuration and development data were untouched.
+
+Handoff: main. This follow-up makes the verification command enforce the coverage
+requirement itself. New remote grading remains unverified; next step is the
+user's Phase 4 resubmission with the new commit. No grading submission performed.

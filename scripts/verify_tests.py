@@ -61,6 +61,22 @@ def save_reports(checkout, output):
             print(f"SQL line coverage: {covered}/{covered + missed} ({covered / (covered + missed):.2%})")
 
 
+def check_sql_coverage(report_path):
+    report = ET.parse(report_path).getroot()
+    lines = report.find("package[@name='dataaccess/sql']/counter[@type='LINE']")
+    if lines is None:
+        print("FAIL: grader report has no SQL line coverage.")
+        return 1
+    covered, missed = int(lines.get("covered")), int(lines.get("missed"))
+    total = covered + missed
+    if total == 0:
+        print("FAIL: grader report contains no SQL lines.")
+        return 1
+    ratio = covered / total
+    print(f"Grader SQL line coverage: {covered}/{total} ({ratio:.2%}); required: 80%.")
+    return 0 if ratio >= 0.80 else 1
+
+
 def run_grader_tools(checkout, args):
     libs = args.grader_libs.resolve()
     jar = checkout / "server/target/server-test-dependencies.jar"
@@ -79,8 +95,9 @@ def run_grader_tools(checkout, args):
         "--csv", str(args.output / "grader-coverage.csv"),
         "--xml", str(args.output / "grader-coverage.xml"),
     ], cwd=checkout, check=True, stdout=subprocess.DEVNULL)
+    coverage_result = check_sql_coverage(args.output / "grader-coverage.xml")
     print(f"Public grader tools exit: {result.returncode}; dataaccess tests only.")
-    return result.returncode
+    return result.returncode or coverage_result
 
 
 def main():
