@@ -1,5 +1,10 @@
 package client;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
+import request.RegisterRequest;
+import result.RegisterResult;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -9,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 public class ServerFacade {
     private static final int TIMEOUT_MILLIS = 5000;
     private final URI serverUri;
+    private final Gson gson = new Gson();
 
     public ServerFacade(int port) {
         if (port < 1 || port > 65535) {
@@ -19,10 +25,25 @@ public class ServerFacade {
 
     /** Clears application data for test setup; this is not a player command. */
     public void clear() throws ServerException {
-        send("DELETE", "/db");
+        send("DELETE", "/db", null);
     }
 
-    private String send(String method, String path) throws ServerException {
+    public RegisterResult register(String username, String password, String email) throws ServerException {
+        var request = new RegisterRequest(username, password, email);
+        String json = send("POST", "/user", request);
+        try {
+            var result = gson.fromJson(json, RegisterResult.class);
+            if (result == null || result.username() == null || !result.username().equals(username)
+                    || result.authToken() == null || result.authToken().isBlank()) {
+                throw new ServerException("The server returned an invalid registration response. Please try again.");
+            }
+            return result;
+        } catch (JsonParseException exception) {
+            throw new ServerException("The server returned an invalid registration response. Please try again.", exception);
+        }
+    }
+
+    private String send(String method, String path, Object body) throws ServerException {
         HttpURLConnection connection = null;
         try {
             connection = (HttpURLConnection) serverUri.resolve(path).toURL().openConnection();
@@ -31,9 +52,12 @@ public class ServerFacade {
             connection.setReadTimeout(TIMEOUT_MILLIS);
             connection.setInstanceFollowRedirects(false);
             connection.setRequestProperty("Accept", "application/json");
+            if (body != null) {
+                writeBody(connection, body);
+            }
             int status = connection.getResponseCode();
             if (status < 200 || status >= 300) {
-                throw new ServerException("The server could not complete the request. Please try again.");
+                throw responseError(status);
             }
             try (var input = connection.getInputStream()) {
                 return new String(input.readAllBytes(), StandardCharsets.UTF_8);
@@ -46,4 +70,24 @@ public class ServerFacade {
             }
         }
     }
+
+    private void writeBody(HttpURLConnection connection, Object body) throws IOException {
+        connection.setDoOutput(true);
+        connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+        byte[] json = gson.toJson(body).getBytes(StandardCharsets.UTF_8);
+        connection.setFixedLengthStreamingMode(json.length);
+        try (var output = connection.getOutputStream()) {
+            output.write(json);
+        }
+    }
+
+    private ServerException responseError(int status) {
+        String message = switch (status) {
+            case 400 -> "Please check the information you entered.";
+            case 403 -> "That username is already taken.";
+            default -> "The server could not complete the request. Please try again.";
+        };
+        return new ServerException(message);
+    }
+
 }

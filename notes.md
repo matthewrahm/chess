@@ -1249,3 +1249,44 @@ previously pinned revisions on November 4. Disposable databases/accounts removed
 Handoff: main. Next milestone is registration using shared request/result types,
 with success and failure tests. These checks cover the foundation only; the full
 Phase 5 client, remaining facade methods, remote grade, and TA demo are pending.
+
+
+## November 4 - Phase 5 registration
+
+Completed the planned November 3 milestone today on main as a separate commit.
+Implemented `ServerFacade.register(String username, String password, String email)`
+returning the existing `result.RegisterResult` from `shared/src/main/java/result/RegisterResult.java`.
+It sends POST /user with `request.RegisterRequest` from the shared module as UTF-8
+JSON; registration needs no auth header. The returned username and authToken let
+the future UI enter the signed-in state. The facade does not print or retain tokens.
+No server-side contracts changed.
+
+Invalid input (400), duplicate usernames (403), other HTTP failures, connection
+failures and malformed/incomplete registration responses become ServerException
+messages suitable for the UI. Transport details stay within the facade. The
+shared HTTP helper writes request bodies with the correct content type and byte
+length. A controlled test HTTP server provides malformed responses and errors;
+success/duplicate/invalid-input tests still run against the real SQL-backed server.
+
+Tests verify persisted credentials and sessions, BCrypt verification, Unicode and
+JSON escaping, duplicate preservation, missing/blank fields, recovery after invalid
+input, distinct session tokens, invalid responses, redirects and server outages.
+Each client case contains assertions. There are now 26 client test cases.
+
+Fresh checks: all 516 project tests passed (zero failures/errors/skips), with
+restricted MySQL access. Facade coverage 47/47 lines (100%); SQL 166/171 (97.08%).
+The public grader JUnit/JaCoCo tools separately passed all 26 client cases with
+47/47 facade lines covered. Official Checkstyle: zero errors/warnings across all
+three modules. Evidence: `/tmp/chess-phase5/nov04-registration/`,
+`nov04-registration-grader/`, and `nov04-registration-quality.log`. Disposable
+verification databases/accounts were removed. No remote submission performed.
+
+Handoff: main. Three Phase 5 milestones are complete: setup, HTTP foundation,
+and registration. Next is login/logout with session tests. The dated November 1
+plan above is historical; November 2 and 3 work was completed November 4, not
+backdated. Revised targets: Nov 5 login/logout, Nov 6 create, Nov 7 list, Nov 8
+join, Nov 9 prelogin UI, Nov 10 postlogin UI, Nov 11 board rendering and play/observe
+flows (two separate milestones), Nov 12 final verification/corrections and TA
+pass-off target. This reaches 12 meaningful milestones with November 13 as buffer.
+Commit only completed work; adjust the plan honestly if needed. Full Phase 5
+functionality, remote grading, and the TA demonstration are still pending.
