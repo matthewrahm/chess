@@ -112,10 +112,19 @@ python3 scripts/verify_tests.py --output /tmp/chess-grader-check \
   --grader-java /path/to/java
 ```
 
-This mode builds the artifact and runs only the grader's `dataaccess` selection,
+By default (`--phase 4`), this mode builds the artifact and runs only the grader's `dataaccess` selection,
 with its bundled JUnit and JaCoCo. It exits unsuccessfully if tests fail, SQL
 coverage is missing, or SQL line coverage is below 80%. The recorded run used Java 26 for those tools
-and Java 21 for compilation. The quality check is separate:
+and Java 21 for compilation.
+
+For Phase 5, add `--phase 5` to select the `client` tests and require at least 80%
+line coverage on `client.ServerFacade`. This also rejects missing coverage and
+an empty test selection. Without `--grader-libs`, the script runs all Maven tests;
+`--phase 5` additionally validates and saves facade coverage in `client-jacoco`.
+Both modes use a disposable database with restricted permissions. The client Maven
+build independently enforces the 80% facade coverage minimum during `verify`.
+
+The quality check is separate:
 
 ```sh
 /path/to/java -jar /path/to/autograder/src/main/resources/phases/libs/checkstyle-1.0.9.jar \

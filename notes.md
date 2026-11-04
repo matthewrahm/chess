@@ -1215,3 +1215,37 @@ Checkstyle 1.0.9 checker reported zero errors/warnings across shared, server and
 client. Both starter files match the pinned upstream files byte for byte.
 Temporary verification databases/accounts were removed; development data and
 configuration were untouched.
+
+
+## November 4 - Phase 5 HTTP facade foundation
+
+Completed the planned November 2 milestone today on main, using the actual date.
+Implemented `client.ServerFacade(int port)` and `clear()` (DELETE /db), with
+five-second connection/read timeouts, no automatic redirects, and safe
+`client.ServerException` messages for HTTP and connection failures. Clear is a
+test/setup operation, not a menu action. No server API changes.
+
+Replaced the official starter's deliberately trivial sample test with student
+facade tests in its required location. They start the real SQL-backed server on
+`server.run(0)`, clear the configured disposable database before each case, and
+check deletion of all record types, repeated clear, invalid ports, HTTP failure,
+and unavailable-server behavior. Supplied pass-off tests remain unchanged.
+
+Added an 80% class-level JaCoCo gate in client/pom.xml. The verification script's
+new `--phase 5` mode selects client tests and checks ServerFacade coverage with
+the public grader tools; default Phase 4 behavior still selects dataaccess/SQL.
+Full Maven verification also saves client coverage and validates it in Phase 5
+mode. README documents both modes. Missing reports/counters, zero measured lines,
+and 79% coverage fail; exactly 80% passes (checked for both phases).
+
+Fresh checks: 497 tests passed with zero failures/errors/skips under restricted
+MySQL permissions. Facade coverage 23/23 lines (100%); SQL 166/171 (97.08%). Public
+grader JUnit/JaCoCo separately passed all 7 client cases at the same facade
+coverage. Official Checkstyle reported zero errors/warnings. Evidence:
+`/tmp/chess-phase5/nov04-foundation/`, `nov04-foundation-grader/`, and
+`nov04-foundation-quality.log`. Upstream starter and grader HEAD still match the
+previously pinned revisions on November 4. Disposable databases/accounts removed.
+
+Handoff: main. Next milestone is registration using shared request/result types,
+with success and failure tests. These checks cover the foundation only; the full
+Phase 5 client, remaining facade methods, remote grade, and TA demo are pending.

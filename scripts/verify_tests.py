@@ -22,8 +22,9 @@ def arguments():
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=3306)
     parser.add_argument("--output", type=Path, required=True, help="New directory for logs and reports")
-    parser.add_argument("--grader-libs", type=Path, help="Run the public grader's JUnit/JaCoCo tools on dataaccess only")
+    parser.add_argument("--grader-libs", type=Path, help="Run the public grader's JUnit/JaCoCo tools for the selected phase")
     parser.add_argument("--grader-java", default="java")
+    parser.add_argument("--phase", choices=("4", "5"), default="4", help="Grader test/coverage scope (default: 4)")
     return parser.parse_args()
 
 
@@ -61,42 +62,50 @@ def save_reports(checkout, output):
             print(f"SQL line coverage: {covered}/{covered + missed} ({covered / (covered + missed):.2%})")
 
 
-def check_sql_coverage(report_path):
+def check_coverage(report_path, phase):
+    label = "ServerFacade" if phase == "5" else "SQL"
+    if not report_path.is_file():
+        print(f"FAIL: missing {label} coverage report.")
+        return 1
     report = ET.parse(report_path).getroot()
-    lines = report.find("package[@name='dataaccess/sql']/counter[@type='LINE']")
+    selector = ("package/class[@name='client/ServerFacade']/counter[@type='LINE']" if phase == "5"
+                else "package[@name='dataaccess/sql']/counter[@type='LINE']")
+    lines = report.find(selector)
     if lines is None:
-        print("FAIL: grader report has no SQL line coverage.")
+        print(f"FAIL: report has no {label} line coverage.")
         return 1
     covered, missed = int(lines.get("covered")), int(lines.get("missed"))
     total = covered + missed
     if total == 0:
-        print("FAIL: grader report contains no SQL lines.")
+        print(f"FAIL: report contains no {label} lines.")
         return 1
     ratio = covered / total
-    print(f"Grader SQL line coverage: {covered}/{total} ({ratio:.2%}); required: 80%.")
+    print(f"{label} line coverage: {covered}/{total} ({ratio:.2%}); required: 80%.")
     return 0 if ratio >= 0.80 else 1
 
 
 def run_grader_tools(checkout, args):
     libs = args.grader_libs.resolve()
-    jar = checkout / "server/target/server-test-dependencies.jar"
-    classes = checkout / "server/target/test-classes"
+    module = "client" if args.phase == "5" else "server"
+    package = "client" if args.phase == "5" else "dataaccess"
+    jar = checkout / f"{module}/target/{module}-test-dependencies.jar"
+    classes = checkout / f"{module}/target/test-classes"
     with (args.output / "junit.log").open("w") as log:
         result = subprocess.run([
             args.grader_java, f"-javaagent:{libs / 'jacocoagent.jar'}", "-jar",
             str(libs / "junit-platform-console-standalone-1.10.1.jar"), "execute",
             "--class-path", f"{classes}:{jar}:{libs / 'junit-jupiter-api-5.10.1.jar'}",
-            "--details=summary", "--reports-dir=test-output", "-p", "dataaccess",
+            "--details=summary", "--reports-dir=test-output", "--fail-if-no-tests", "-p", package,
         ], cwd=checkout, stdout=log, stderr=subprocess.STDOUT)
     shutil.copytree(checkout / "test-output", args.output / "grader-tests")
     subprocess.run([
         args.grader_java, "-jar", str(libs / "jacococli.jar"), "report", "jacoco.exec",
-        "--classfiles", str(checkout / "server/target/classes"),
+        "--classfiles", str(checkout / f"{module}/target/classes"),
         "--csv", str(args.output / "grader-coverage.csv"),
         "--xml", str(args.output / "grader-coverage.xml"),
     ], cwd=checkout, check=True, stdout=subprocess.DEVNULL)
-    coverage_result = check_sql_coverage(args.output / "grader-coverage.xml")
-    print(f"Public grader tools exit: {result.returncode}; dataaccess tests only.")
+    coverage_result = check_coverage(args.output / "grader-coverage.xml", args.phase)
+    print(f"Public grader tools exit: {result.returncode}; {package} tests only.")
     return result.returncode or coverage_result
 
 
@@ -142,8 +151,14 @@ def main():
             if args.grader_libs and result.returncode == 0:
                 return run_grader_tools(checkout, args)
             save_reports(checkout, args.output)
+            client_coverage = checkout / "client/target/site/jacoco"
+            coverage_result = 0
+            if client_coverage.exists():
+                shutil.copytree(client_coverage, args.output / "client-jacoco")
+            if args.phase == "5":
+                coverage_result = check_coverage(client_coverage / "jacoco.xml", args.phase)
             print(f"Maven exit: {result.returncode}; reports: {args.output}")
-            return result.returncode
+            return result.returncode or coverage_result
     finally:
         admin_sql(f"DROP DATABASE IF EXISTS `{database}`;"
                   f"DROP DATABASE IF EXISTS `{database}outside`;"
