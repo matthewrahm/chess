@@ -1290,3 +1290,29 @@ flows (two separate milestones), Nov 12 final verification/corrections and TA
 pass-off target. This reaches 12 meaningful milestones with November 13 as buffer.
 Commit only completed work; adjust the plan honestly if needed. Full Phase 5
 functionality, remote grading, and the TA demonstration are still pending.
+
+## November 5 - Phase 5 login
+
+Implemented `ServerFacade.login(String username, String password)`, returning
+`result.LoginResult` from the shared module. It sends `request.LoginRequest` as
+POST /session without an authorization header. The future UI receives the
+username/token and owns signed-in state. Login and registration share response
+validation through `model.AuthData`; malformed or mismatched sessions fail with
+safe ServerException messages. Incorrect credentials map to a specific message.
+No server API changed, and no console commands are implemented in this milestone.
+
+Added 17 client cases covering fresh independent sessions, unchanged credentials,
+previous-session preservation, Unicode/JSON escaping, unknown users, incorrect
+passwords, missing fields, retry, invalid responses, redirects and offline servers.
+Fresh restricted-database verification: 533 project tests passed with zero
+failures/errors/skips; ServerFacade 52/52 lines (100%), SQL 166/171 (97.08%).
+Public grader JUnit/JaCoCo separately passed all 43 client cases at 100% facade
+coverage. Official whole-project Checkstyle reported zero findings. Evidence:
+`/tmp/chess-phase5/nov05-login/`, `nov05-login-grader/`, `nov05-login-quality.log`.
+Temporary databases/accounts were removed. No remote grading submission made.
+
+Rechecked the published Phase 5 and API requirements on November 5. Upstream
+starter HEAD remains d3ffc6639e2d78d0e88b3fe899936b995d8614e1; public grader HEAD
+remains a1cc752ffb51a8b15400bd4fed8ee2ba978885a9. Supplied pass-off tests were not
+edited. Handoff: main; four Phase 5 commits including setup. Today's second
+commit will implement logout and verify session revocation through HTTP.

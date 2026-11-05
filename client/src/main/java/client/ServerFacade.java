@@ -2,7 +2,10 @@ package client;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import model.AuthData;
+import request.LoginRequest;
 import request.RegisterRequest;
+import result.LoginResult;
 import result.RegisterResult;
 
 import java.io.IOException;
@@ -29,17 +32,27 @@ public class ServerFacade {
     }
 
     public RegisterResult register(String username, String password, String email) throws ServerException {
-        var request = new RegisterRequest(username, password, email);
-        String json = send("POST", "/user", request);
+        var auth = authenticate("/user", new RegisterRequest(username, password, email), username, "registration");
+        return new RegisterResult(auth.username(), auth.authToken());
+    }
+
+    public LoginResult login(String username, String password) throws ServerException {
+        var auth = authenticate("/session", new LoginRequest(username, password), username, "login");
+        return new LoginResult(auth.username(), auth.authToken());
+    }
+
+    private AuthData authenticate(String path, Object request, String username, String operation) throws ServerException {
+        String json = send("POST", path, request);
+        String invalidResponse = "The server returned an invalid " + operation + " response. Please try again.";
         try {
-            var result = gson.fromJson(json, RegisterResult.class);
-            if (result == null || result.username() == null || !result.username().equals(username)
-                    || result.authToken() == null || result.authToken().isBlank()) {
-                throw new ServerException("The server returned an invalid registration response. Please try again.");
+            var auth = gson.fromJson(json, AuthData.class);
+            if (auth == null || auth.username() == null || !auth.username().equals(username)
+                    || auth.authToken() == null || auth.authToken().isBlank()) {
+                throw new ServerException(invalidResponse);
             }
-            return result;
+            return auth;
         } catch (JsonParseException exception) {
-            throw new ServerException("The server returned an invalid registration response. Please try again.", exception);
+            throw new ServerException(invalidResponse, exception);
         }
     }
 
@@ -84,6 +97,7 @@ public class ServerFacade {
     private ServerException responseError(int status) {
         String message = switch (status) {
             case 400 -> "Please check the information you entered.";
+            case 401 -> "Incorrect username or password.";
             case 403 -> "That username is already taken.";
             default -> "The server could not complete the request. Please try again.";
         };

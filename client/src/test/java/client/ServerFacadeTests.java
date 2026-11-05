@@ -193,4 +193,89 @@ public class ServerFacadeTests {
         assertEquals("Unable to reach the server. Please try again.", error.getMessage());
     }
 
+    @Test
+    void loginCreatesFreshSessionsWithoutReplacingCredentialsOrEarlierSessions() throws Exception {
+        var registered = facade.register("player", "secret", "p@example.com");
+        var original = storage.getUser("player");
+
+        var first = facade.login("player", "secret");
+        var second = facade.login("player", "secret");
+
+        assertEquals("player", first.username());
+        assertNotEquals(registered.authToken(), first.authToken());
+        assertNotEquals(first.authToken(), second.authToken());
+        assertEquals(new AuthData(first.authToken(), "player"), storage.getAuth(first.authToken()));
+        assertEquals(new AuthData(second.authToken(), "player"), storage.getAuth(second.authToken()));
+        assertNotNull(storage.getAuth(registered.authToken()));
+        assertEquals(original, storage.getUser("player"));
+    }
+
+    @Test
+    void loginPreservesUnicodeAndJsonPunctuation() throws Exception {
+        String username = "Zoë 王";
+        String password = "a\\b\"c";
+        facade.register(username, password, "p@example.com");
+        var result = facade.login(username, password);
+        assertEquals(username, result.username());
+        assertEquals(username, storage.getAuth(result.authToken()).username());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"player", "unknown"})
+    void incorrectCredentialsPreserveExistingSessionAndAllowRetry(String username) throws Exception {
+        var registered = facade.register("player", "secret", "p@example.com");
+        var original = storage.getUser("player");
+
+        var error = assertThrows(ServerException.class, () -> facade.login(username, "incorrect"));
+
+        assertEquals("Incorrect username or password.", error.getMessage());
+        assertEquals(original, storage.getUser("player"));
+        assertNotNull(storage.getAuth(registered.authToken()));
+        assertEquals("player", facade.login("player", "secret").username());
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidLogins")
+    void missingLoginFieldsAreReportedWithoutChangingCredentials(String username, String password) throws Exception {
+        facade.register("player", "secret", "p@example.com");
+        var original = storage.getUser("player");
+        var error = assertThrows(ServerException.class, () -> facade.login(username, password));
+        assertEquals("Please check the information you entered.", error.getMessage());
+        assertEquals(original, storage.getUser("player"));
+    }
+
+    static Stream<Arguments> invalidLogins() {
+        return Stream.of(Arguments.of(null, "secret"), Arguments.of(" ", "secret"),
+                Arguments.of("player", null), Arguments.of("player", ""));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"not-json", "null", "{}", "{\"username\":\"player\"}",
+            "{\"username\":\"player\",\"authToken\":\" \"}",
+            "{\"username\":\"other\",\"authToken\":\"token\"}"})
+    void invalidLoginResponseDoesNotReturnASession(String response) throws Exception {
+        try (var invalidServer = new TestHttpServer(200, response)) {
+            var invalidFacade = new ServerFacade(invalidServer.port());
+            var error = assertThrows(ServerException.class, () -> invalidFacade.login("player", "secret"));
+            assertEquals("The server returned an invalid login response. Please try again.", error.getMessage());
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {302, 500})
+    void loginDoesNotTreatHttpErrorsOrRedirectsAsSuccess(int status) throws Exception {
+        try (var failedServer = new TestHttpServer(status, "private server details")) {
+            var failedFacade = new ServerFacade(failedServer.port());
+            var error = assertThrows(ServerException.class, () -> failedFacade.login("player", "secret"));
+            assertEquals("The server could not complete the request. Please try again.", error.getMessage());
+        }
+    }
+
+    @Test
+    void loginReportsAnUnavailableServer() throws Exception {
+        var disconnected = new ServerFacade(TestHttpServer.stoppedPort());
+        var error = assertThrows(ServerException.class, () -> disconnected.login("player", "secret"));
+        assertEquals("Unable to reach the server. Please try again.", error.getMessage());
+    }
+
 }
