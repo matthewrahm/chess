@@ -1316,3 +1316,38 @@ starter HEAD remains d3ffc6639e2d78d0e88b3fe899936b995d8614e1; public grader HEA
 remains a1cc752ffb51a8b15400bd4fed8ee2ba978885a9. Supplied pass-off tests were not
 edited. Handoff: main; four Phase 5 commits including setup. Today's second
 commit will implement logout and verify session revocation through HTTP.
+
+## November 5 - Phase 5 logout
+
+Implemented `ServerFacade.logout(String authToken)`: DELETE /session with the
+`authorization` header and no body, returning void on success. Blank, missing,
+or line-breaking tokens produce ServerException before sending a request;
+unknown/revoked tokens receive a safe expired-session message. Login's 401 message
+still describes incorrect credentials. The HTTP helper accepts an optional token
+for authenticated requests; the facade does not keep UI session state. Future UI
+code should clear its local session after successful logout and handle failures.
+The existing shared LogoutRequest/server contract is unchanged.
+
+Added 11 client cases for login-token and registration-token revocation,
+preservation of another session and another user's session, unchanged users/games,
+fresh login after logout, repeated logout, invalid tokens, HTTP errors, redirects,
+and unavailable-server recovery. All cases contain assertions; real SQL-backed
+HTTP tests verify effects on storage, while controlled servers cover transport errors.
+
+Fresh checks: 544 project tests passed with zero failures/errors/skips under
+restricted MySQL permissions. ServerFacade coverage: 59/59 lines (100%); SQL:
+166/171 (97.08%). Public grader tools independently passed all 54 client cases
+with 100% facade coverage. Official whole-project Checkstyle: zero findings.
+Reviewed changed code for shared responsibilities, safe errors, readable methods,
+and test isolation. Supplied pass-off tests and grading configuration unchanged.
+Evidence: `/tmp/chess-phase5/nov05-logout/`, `nov05-logout-grader/`, and
+`nov05-logout-quality.log`. Disposable databases/accounts removed; development
+configuration/data untouched. These are local checks, not a remote grade.
+
+Handoff: main. Five Phase 5 commits are complete: setup, HTTP foundation,
+registration, login, logout. Today's two commits split login and logout into
+independently verified milestones, using the actual date and normal author only.
+Next: create-game facade and its success/failure tests on Nov 6, followed by list,
+join, prelogin UI, postlogin UI, board rendering and play/observe. Keep Nov 12 for
+final checks/corrections and TA pass-off target, with Nov 13 as buffer. The client
+menus, remaining game facade methods, remote grade, and TA demo remain pending.

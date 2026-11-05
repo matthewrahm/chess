@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import server.Server;
 
 import org.junit.jupiter.params.provider.Arguments;
@@ -276,6 +277,76 @@ public class ServerFacadeTests {
         var disconnected = new ServerFacade(TestHttpServer.stoppedPort());
         var error = assertThrows(ServerException.class, () -> disconnected.login("player", "secret"));
         assertEquals("Unable to reach the server. Please try again.", error.getMessage());
+    }
+
+    @Test
+    void logoutRevokesOnlyTheRequestedSessionAndPreservesStoredData() throws Exception {
+        var registered = facade.register("player", "secret", "p@example.com");
+        var login = facade.login("player", "secret");
+        var other = facade.register("other", "secret", "o@example.com");
+        var user = storage.getUser("player");
+        int gameId = storage.createGame("Practice", new ChessGame());
+        var game = storage.getGame(gameId);
+
+        facade.logout(login.authToken());
+
+        assertNull(storage.getAuth(login.authToken()));
+        assertNotNull(storage.getAuth(registered.authToken()));
+        assertNotNull(storage.getAuth(other.authToken()));
+        assertEquals(user, storage.getUser("player"));
+        assertEquals(game, storage.getGame(gameId));
+        var error = assertThrows(ServerException.class, () -> facade.logout(login.authToken()));
+        assertEquals("Your session is no longer valid. Please log in again.", error.getMessage());
+    }
+
+    @Test
+    void logoutAcceptsRegistrationTokenAndAllowsFreshLogin() throws Exception {
+        var registered = facade.register("player", "secret", "p@example.com");
+        facade.logout(registered.authToken());
+        var loggedIn = facade.login("player", "secret");
+
+        assertNull(storage.getAuth(registered.authToken()));
+        assertNotEquals(registered.authToken(), loggedIn.authToken());
+        assertEquals("player", storage.getAuth(loggedIn.authToken()).username());
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "unknown", "token\nInjected", "token\rInjected"})
+    void invalidLogoutPreservesValidSessionsAndAllowsRetry(String token) throws Exception {
+        var registered = facade.register("player", "secret", "p@example.com");
+
+        var error = assertThrows(ServerException.class, () -> facade.logout(token));
+
+        assertEquals("Your session is no longer valid. Please log in again.", error.getMessage());
+        assertNotNull(storage.getAuth(registered.authToken()));
+        facade.logout(registered.authToken());
+        assertNull(storage.getAuth(registered.authToken()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {302, 500})
+    void logoutDoesNotTreatHttpErrorsOrRedirectsAsSuccess(int status) throws Exception {
+        var registered = facade.register("player", "secret", "p@example.com");
+        try (var failedServer = new TestHttpServer(status, "private server details")) {
+            var failedFacade = new ServerFacade(failedServer.port());
+            var error = assertThrows(ServerException.class, () -> failedFacade.logout(registered.authToken()));
+            assertEquals("The server could not complete the request. Please try again.", error.getMessage());
+            assertNotNull(storage.getAuth(registered.authToken()));
+        }
+    }
+
+    @Test
+    void unavailableServerLeavesSessionUsableForLogoutRetry() throws Exception {
+        var registered = facade.register("player", "secret", "p@example.com");
+        var disconnected = new ServerFacade(TestHttpServer.stoppedPort());
+
+        var error = assertThrows(ServerException.class, () -> disconnected.logout(registered.authToken()));
+
+        assertEquals("Unable to reach the server. Please try again.", error.getMessage());
+        assertNotNull(storage.getAuth(registered.authToken()));
+        facade.logout(registered.authToken());
+        assertNull(storage.getAuth(registered.authToken()));
     }
 
 }

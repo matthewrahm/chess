@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 /** Sends client requests to the HTTP server without exposing transport details to the UI. */
 public class ServerFacade {
     private static final int TIMEOUT_MILLIS = 5000;
+    private static final String INVALID_SESSION = "Your session is no longer valid. Please log in again.";
     private final URI serverUri;
     private final Gson gson = new Gson();
 
@@ -28,7 +29,7 @@ public class ServerFacade {
 
     /** Clears application data for test setup; this is not a player command. */
     public void clear() throws ServerException {
-        send("DELETE", "/db", null);
+        send("DELETE", "/db", null, null);
     }
 
     public RegisterResult register(String username, String password, String email) throws ServerException {
@@ -41,8 +42,15 @@ public class ServerFacade {
         return new LoginResult(auth.username(), auth.authToken());
     }
 
+    public void logout(String authToken) throws ServerException {
+        if (authToken == null || authToken.isBlank() || authToken.contains("\r") || authToken.contains("\n")) {
+            throw new ServerException(INVALID_SESSION);
+        }
+        send("DELETE", "/session", null, authToken);
+    }
+
     private AuthData authenticate(String path, Object request, String username, String operation) throws ServerException {
-        String json = send("POST", path, request);
+        String json = send("POST", path, request, null);
         String invalidResponse = "The server returned an invalid " + operation + " response. Please try again.";
         try {
             var auth = gson.fromJson(json, AuthData.class);
@@ -56,7 +64,7 @@ public class ServerFacade {
         }
     }
 
-    private String send(String method, String path, Object body) throws ServerException {
+    private String send(String method, String path, Object body, String authToken) throws ServerException {
         HttpURLConnection connection = null;
         try {
             connection = (HttpURLConnection) serverUri.resolve(path).toURL().openConnection();
@@ -65,12 +73,15 @@ public class ServerFacade {
             connection.setReadTimeout(TIMEOUT_MILLIS);
             connection.setInstanceFollowRedirects(false);
             connection.setRequestProperty("Accept", "application/json");
+            if (authToken != null) {
+                connection.setRequestProperty("authorization", authToken);
+            }
             if (body != null) {
                 writeBody(connection, body);
             }
             int status = connection.getResponseCode();
             if (status < 200 || status >= 300) {
-                throw responseError(status);
+                throw responseError(status, method, path);
             }
             try (var input = connection.getInputStream()) {
                 return new String(input.readAllBytes(), StandardCharsets.UTF_8);
@@ -94,10 +105,11 @@ public class ServerFacade {
         }
     }
 
-    private ServerException responseError(int status) {
+    private ServerException responseError(int status, String method, String path) {
         String message = switch (status) {
             case 400 -> "Please check the information you entered.";
-            case 401 -> "Incorrect username or password.";
+            case 401 -> method.equals("POST") && path.equals("/session")
+                    ? "Incorrect username or password." : INVALID_SESSION;
             case 403 -> "That username is already taken.";
             default -> "The server could not complete the request. Please try again.";
         };
