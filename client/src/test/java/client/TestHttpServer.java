@@ -9,18 +9,28 @@ import java.nio.charset.StandardCharsets;
 /** Controlled HTTP responses for transport failures that the real server should never produce. */
 final class TestHttpServer implements AutoCloseable {
     private final HttpServer server;
+    private volatile Request request;
 
     TestHttpServer(int status, String response) throws IOException {
         server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
         server.createContext("/", exchange -> {
             try (exchange) {
-                exchange.getRequestBody().readAllBytes();
+                request = new Request(exchange.getRequestMethod(), exchange.getRequestURI().toString(),
+                        exchange.getRequestHeaders().getFirst("authorization"),
+                        new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
                 byte[] body = response.getBytes(StandardCharsets.UTF_8);
                 exchange.sendResponseHeaders(status, body.length);
                 exchange.getResponseBody().write(body);
             }
         });
         server.start();
+    }
+
+    record Request(String method, String path, String authorization, String body) {
+    }
+
+    Request request() {
+        return request;
     }
 
     int port() {

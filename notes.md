@@ -1351,3 +1351,31 @@ Next: create-game facade and its success/failure tests on Nov 6, followed by lis
 join, prelogin UI, postlogin UI, board rendering and play/observe. Keep Nov 12 for
 final checks/corrections and TA pass-off target, with Nov 13 as buffer. The client
 menus, remaining game facade methods, remote grade, and TA demo remain pending.
+
+## November 6 - Phase 5 create game
+
+Implemented `ServerFacade.createGame(String authToken, String gameName)` returning
+`result.CreateGameResult` from the shared module. POST /game sends the token only
+in the authorization header and serializes `request.CreateGameRequest` with a
+null token so its JSON body contains only gameName. The future UI keeps the
+returned gameID internal and does not join a seat when creating a game.
+Extracted shared token validation and JSON response parsing for consistent safe
+ServerException behavior. Missing/invalid sessions, bad names, server failures,
+and malformed or nonpositive-ID responses cannot appear as successful creation.
+No server contract or UI commands changed.
+
+Added 22 client cases covering persisted initial boards, empty seats, Unicode,
+duplicate names with distinct IDs, missing/invalid/revoked tokens, invalid names,
+recovery, exact HTTP request shape, invalid responses, redirects and outages.
+Fresh restricted-database checks: 566 project tests passed with zero
+failures/errors/skips; facade 73/73 lines (100%); SQL 166/171 (97.08%). Public
+grader tools separately passed all 76 client cases at 100% facade coverage.
+Official Checkstyle across all modules reported zero findings. Evidence:
+`/tmp/chess-phase5/nov06-create/`, `nov06-create-grader/`, `nov06-create-quality.log`.
+Temporary databases/accounts removed; no remote grading submission made.
+
+Rechecked published Phase 5/API requirements November 6. Upstream starter remains
+at d3ffc6639e2d78d0e88b3fe899936b995d8614e1 and public grader remains at
+a1cc752ffb51a8b15400bd4fed8ee2ba978885a9. Supplied pass-off files unchanged.
+Handoff: main; six Phase 5 milestones complete. Next is list-games support as
+today's second requested commit, moving that milestone ahead of its Nov 7 target.

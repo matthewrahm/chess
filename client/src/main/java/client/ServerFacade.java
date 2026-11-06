@@ -3,8 +3,10 @@ package client;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import model.AuthData;
+import request.CreateGameRequest;
 import request.LoginRequest;
 import request.RegisterRequest;
+import result.CreateGameResult;
 import result.LoginResult;
 import result.RegisterResult;
 
@@ -43,22 +45,47 @@ public class ServerFacade {
     }
 
     public void logout(String authToken) throws ServerException {
+        requireToken(authToken);
+        send("DELETE", "/session", null, authToken);
+    }
+
+    private void requireToken(String authToken) throws ServerException {
         if (authToken == null || authToken.isBlank() || authToken.contains("\r") || authToken.contains("\n")) {
             throw new ServerException(INVALID_SESSION);
         }
-        send("DELETE", "/session", null, authToken);
+    }
+
+    public CreateGameResult createGame(String authToken, String gameName) throws ServerException {
+        requireToken(authToken);
+        // Authorization belongs in the header, not in the JSON body.
+        var request = new CreateGameRequest(null, gameName);
+        String json = send("POST", "/game", request, authToken);
+        String invalidResponse = "The server returned an invalid create-game response. Please try again.";
+        var result = readResponse(json, CreateGameResult.class, invalidResponse);
+        if (result.gameID() <= 0) {
+            throw new ServerException(invalidResponse);
+        }
+        return result;
     }
 
     private AuthData authenticate(String path, Object request, String username, String operation) throws ServerException {
         String json = send("POST", path, request, null);
         String invalidResponse = "The server returned an invalid " + operation + " response. Please try again.";
+        var auth = readResponse(json, AuthData.class, invalidResponse);
+        if (auth.username() == null || !auth.username().equals(username)
+                || auth.authToken() == null || auth.authToken().isBlank()) {
+            throw new ServerException(invalidResponse);
+        }
+        return auth;
+    }
+
+    private <T> T readResponse(String json, Class<T> type, String invalidResponse) throws ServerException {
         try {
-            var auth = gson.fromJson(json, AuthData.class);
-            if (auth == null || auth.username() == null || !auth.username().equals(username)
-                    || auth.authToken() == null || auth.authToken().isBlank()) {
+            var result = gson.fromJson(json, type);
+            if (result == null) {
                 throw new ServerException(invalidResponse);
             }
-            return auth;
+            return result;
         } catch (JsonParseException exception) {
             throw new ServerException(invalidResponse, exception);
         }

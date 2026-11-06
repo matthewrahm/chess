@@ -1,6 +1,7 @@
 package client;
 
 import chess.ChessGame;
+import com.google.gson.JsonParser;
 import dataaccess.sql.SqlDataAccess;
 import model.AuthData;
 import model.UserData;
@@ -347,6 +348,103 @@ public class ServerFacadeTests {
         assertNotNull(storage.getAuth(registered.authToken()));
         facade.logout(registered.authToken());
         assertNull(storage.getAuth(registered.authToken()));
+    }
+
+    @Test
+    void createGameStoresInitialBoardWithoutJoiningEitherSeat() throws Exception {
+        var auth = facade.register("player", "secret", "p@example.com");
+        String name = "Practice \"王\"";
+        var result = facade.createGame(auth.authToken(), name);
+        var game = storage.getGame(result.gameID());
+
+        assertTrue(result.gameID() > 0);
+        assertEquals(name, game.gameName());
+        assertNull(game.whiteUsername());
+        assertNull(game.blackUsername());
+        assertEquals(new ChessGame(), game.game());
+        assertNotNull(storage.getAuth(auth.authToken()));
+    }
+
+    @Test
+    void duplicateGameNamesHaveIndependentIds() throws Exception {
+        var auth = facade.register("player", "secret", "p@example.com");
+        var first = facade.createGame(auth.authToken(), "Practice");
+        var second = facade.createGame(auth.authToken(), "Practice");
+        assertNotEquals(first.gameID(), second.gameID());
+        assertEquals(2, storage.listGames().size());
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "unknown", "token\nInjected", "token\rInjected"})
+    void invalidSessionCannotCreateGame(String token) throws Exception {
+        var error = assertThrows(ServerException.class, () -> facade.createGame(token, "Practice"));
+        assertEquals("Your session is no longer valid. Please log in again.", error.getMessage());
+        assertTrue(storage.listGames().isEmpty());
+    }
+
+    @Test
+    void revokedSessionCannotCreateGameButFreshLoginCan() throws Exception {
+        var auth = facade.register("player", "secret", "p@example.com");
+        facade.logout(auth.authToken());
+        assertThrows(ServerException.class, () -> facade.createGame(auth.authToken(), "Practice"));
+        assertTrue(storage.listGames().isEmpty());
+        var login = facade.login("player", "secret");
+        assertNotNull(storage.getGame(facade.createGame(login.authToken(), "Practice").gameID()));
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" "})
+    void invalidGameNameDoesNotCreateRows(String name) throws Exception {
+        var auth = facade.register("player", "secret", "p@example.com");
+        var error = assertThrows(ServerException.class, () -> facade.createGame(auth.authToken(), name));
+        assertEquals("Please check the information you entered.", error.getMessage());
+        assertTrue(storage.listGames().isEmpty());
+        assertTrue(facade.createGame(auth.authToken(), "Retry").gameID() > 0);
+    }
+
+    @Test
+    void createGameSendsTokenOnlyInAuthorizationHeader() throws Exception {
+        try (var http = new TestHttpServer(200, "{\"gameID\":42}")) {
+            var client = new ServerFacade(http.port());
+            assertEquals(42, client.createGame("private-token", "Practice").gameID());
+            var request = http.request();
+            assertEquals("POST", request.method());
+            assertEquals("/game", request.path());
+            assertEquals("private-token", request.authorization());
+            var json = JsonParser.parseString(request.body()).getAsJsonObject();
+            assertEquals(1, json.size());
+            assertEquals("Practice", json.get("gameName").getAsString());
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"not-json", "null", "{}", "{\"gameID\":0}", "{\"gameID\":-1}",
+            "{\"gameID\":\"invalid\"}"})
+    void invalidCreateResponseIsNotTreatedAsSuccess(String response) throws Exception {
+        try (var http = new TestHttpServer(200, response)) {
+            var client = new ServerFacade(http.port());
+            var error = assertThrows(ServerException.class, () -> client.createGame("token", "Practice"));
+            assertEquals("The server returned an invalid create-game response. Please try again.", error.getMessage());
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {302, 500})
+    void createGameReportsHttpFailureWithoutLeakingServerDetails(int status) throws Exception {
+        try (var http = new TestHttpServer(status, "private database details")) {
+            var client = new ServerFacade(http.port());
+            var error = assertThrows(ServerException.class, () -> client.createGame("token", "Practice"));
+            assertEquals("The server could not complete the request. Please try again.", error.getMessage());
+        }
+    }
+
+    @Test
+    void createGameReportsAnUnavailableServer() throws Exception {
+        var client = new ServerFacade(TestHttpServer.stoppedPort());
+        var error = assertThrows(ServerException.class, () -> client.createGame("token", "Practice"));
+        assertEquals("Unable to reach the server. Please try again.", error.getMessage());
     }
 
 }
