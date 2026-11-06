@@ -1379,3 +1379,42 @@ at d3ffc6639e2d78d0e88b3fe899936b995d8614e1 and public grader remains at
 a1cc752ffb51a8b15400bd4fed8ee2ba978885a9. Supplied pass-off files unchanged.
 Handoff: main; six Phase 5 milestones complete. Next is list-games support as
 today's second requested commit, moving that milestone ahead of its Nov 7 target.
+
+## November 6 - Phase 5 list games
+
+Implemented `ServerFacade.listGames(String authToken)` returning the shared
+`result.ListGamesResult` and `result.GameSummary` types. It sends GET /game with
+authorization and no body. Each call fetches a fresh immutable collection; an
+empty list is valid, and unassigned player names remain null. Missing collections,
+null entries, nonpositive IDs, and missing/blank game names produce safe
+ServerException messages. The future UI must number these summaries separately
+from their gameIDs; no display ordering is promised by the server. No server API
+or UI commands changed.
+
+Tests cover all game summaries (including duplicate names and occupied/empty
+seats), access by another signed-in user, empty lists, updates between requests,
+unchanged prior snapshots, immutable collections, invalid/revoked sessions,
+reauthentication, malformed responses, exact HTTP request shape, and outages.
+Consolidated repeated HTTP/offline cases into parameterized tests and extracted
+server/database lifecycle into `ServerFacadeTestSupport`. Every actual test stays
+in the required `ServerFacadeTests.java`; its inherited BeforeEach still clears
+the disposable database. This resolves the course checker's 510-line file limit
+without removing behavioral coverage. Also corrected a test-literal escaping
+error caught by compilation during the initial list-game verification run.
+
+Final fresh checks: 590 project tests passed with zero failures/errors/skips
+under restricted database permissions. Facade 84/84 lines (100%); SQL 166/171
+(97.08%). Public grader tools independently discovered and passed all 100 client
+cases at 100% facade coverage, including the inherited lifecycle. Official
+whole-project Checkstyle: zero findings. Reviewed changed code and tests for
+responsibilities, duplication, safe errors, and isolation. No supplied pass-off
+tests or grading configuration changed. Evidence:
+`/tmp/chess-phase5/nov06-list-verified/`, `nov06-list-grader/`,
+`nov06-list-quality.log`. Disposable databases/accounts were removed.
+
+Handoff: main; seven Phase 5 commits complete. Today's two milestones are create
+and list, moving list ahead of the previous Nov 7 target. Next: join-game facade
+and seat/error tests, then prelogin/postlogin command loops, board rendering,
+and play/observe flows. Keep Nov 12 for final verification/corrections and the TA
+pass-off target, with Nov 13 as buffer. Remote Phase 5 grade and TA demonstration
+remain pending. These local results do not establish completion of Phase 5.

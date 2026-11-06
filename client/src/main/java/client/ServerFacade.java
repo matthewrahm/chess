@@ -8,12 +8,14 @@ import request.LoginRequest;
 import request.RegisterRequest;
 import result.CreateGameResult;
 import result.LoginResult;
+import result.ListGamesResult;
 import result.RegisterResult;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 /** Sends client requests to the HTTP server without exposing transport details to the UI. */
 public class ServerFacade {
@@ -49,12 +51,6 @@ public class ServerFacade {
         send("DELETE", "/session", null, authToken);
     }
 
-    private void requireToken(String authToken) throws ServerException {
-        if (authToken == null || authToken.isBlank() || authToken.contains("\r") || authToken.contains("\n")) {
-            throw new ServerException(INVALID_SESSION);
-        }
-    }
-
     public CreateGameResult createGame(String authToken, String gameName) throws ServerException {
         requireToken(authToken);
         // Authorization belongs in the header, not in the JSON body.
@@ -66,6 +62,28 @@ public class ServerFacade {
             throw new ServerException(invalidResponse);
         }
         return result;
+    }
+
+    public ListGamesResult listGames(String authToken) throws ServerException {
+        requireToken(authToken);
+        String json = send("GET", "/game", null, authToken);
+        String invalidResponse = "The server returned an invalid game-list response. Please try again.";
+        var result = readResponse(json, ListGamesResult.class, invalidResponse);
+        if (result.games() == null) {
+            throw new ServerException(invalidResponse);
+        }
+        for (var game : result.games()) {
+            if (game == null || game.gameID() <= 0 || game.gameName() == null || game.gameName().isBlank()) {
+                throw new ServerException(invalidResponse);
+            }
+        }
+        return new ListGamesResult(List.copyOf(result.games()));
+    }
+
+    private void requireToken(String authToken) throws ServerException {
+        if (authToken == null || authToken.isBlank() || authToken.contains("\r") || authToken.contains("\n")) {
+            throw new ServerException(INVALID_SESSION);
+        }
     }
 
     private AuthData authenticate(String path, Object request, String username, String operation) throws ServerException {

@@ -2,58 +2,28 @@ package client;
 
 import chess.ChessGame;
 import com.google.gson.JsonParser;
-import dataaccess.sql.SqlDataAccess;
 import model.AuthData;
+import model.GameData;
+import result.GameSummary;
 import model.UserData;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
-import server.Server;
 
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.stream.Stream;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Uses the configured disposable database; run with scripts/verify_tests.py. */
-public class ServerFacadeTests {
-    private static Server server;
-    private static ServerFacade facade;
-    private static SqlDataAccess storage;
-
-    @BeforeAll
-    static void startServer() throws Exception {
-        server = new Server();
-        var port = server.run(0);
-        facade = new ServerFacade(port);
-        storage = new SqlDataAccess();
-    }
-
-    @BeforeEach
-    void clearDatabase() throws Exception {
-        facade.clear();
-    }
-
-    @AfterAll
-    static void stopServer() throws Exception {
-        try {
-            if (storage != null) {
-                storage.clear();
-            }
-        } finally {
-            if (server != null) {
-                server.stop();
-            }
-        }
-    }
-
+public class ServerFacadeTests extends ServerFacadeTestSupport {
     @Test
     void clearRemovesUsersSessionsAndGamesThroughHttp() throws Exception {
         storage.createUser(new UserData("player", "stored-hash", "player@example.com"));
@@ -80,22 +50,6 @@ public class ServerFacadeTests {
     @ValueSource(ints = {-1, 0, 65536})
     void rejectsInvalidPorts(int port) {
         assertThrows(IllegalArgumentException.class, () -> new ServerFacade(port));
-    }
-
-    @Test
-    void clearReportsServerFailureWithoutLeakingResponseDetails() throws Exception {
-        try (var failedServer = new TestHttpServer(500, "private database details")) {
-            var failedFacade = new ServerFacade(failedServer.port());
-            var error = assertThrows(ServerException.class, failedFacade::clear);
-            assertEquals("The server could not complete the request. Please try again.", error.getMessage());
-        }
-    }
-
-    @Test
-    void clearReportsAnUnavailableServer() throws Exception {
-        var disconnected = new ServerFacade(TestHttpServer.stoppedPort());
-        var error = assertThrows(ServerException.class, disconnected::clear);
-        assertEquals("Unable to reach the server. Please try again.", error.getMessage());
     }
 
     @Test
@@ -176,25 +130,6 @@ public class ServerFacadeTests {
         }
     }
 
-    @ParameterizedTest
-    @ValueSource(ints = {302, 500})
-    void registrationDoesNotTreatHttpErrorsOrRedirectsAsSuccess(int status) throws Exception {
-        try (var failedServer = new TestHttpServer(status, "private server details")) {
-            var failedFacade = new ServerFacade(failedServer.port());
-            var error = assertThrows(ServerException.class,
-                    () -> failedFacade.register("player", "secret", "p@example.com"));
-            assertEquals("The server could not complete the request. Please try again.", error.getMessage());
-        }
-    }
-
-    @Test
-    void registrationReportsAnUnavailableServer() throws Exception {
-        var disconnected = new ServerFacade(TestHttpServer.stoppedPort());
-        var error = assertThrows(ServerException.class,
-                () -> disconnected.register("player", "secret", "p@example.com"));
-        assertEquals("Unable to reach the server. Please try again.", error.getMessage());
-    }
-
     @Test
     void loginCreatesFreshSessionsWithoutReplacingCredentialsOrEarlierSessions() throws Exception {
         var registered = facade.register("player", "secret", "p@example.com");
@@ -261,23 +196,6 @@ public class ServerFacadeTests {
             var error = assertThrows(ServerException.class, () -> invalidFacade.login("player", "secret"));
             assertEquals("The server returned an invalid login response. Please try again.", error.getMessage());
         }
-    }
-
-    @ParameterizedTest
-    @ValueSource(ints = {302, 500})
-    void loginDoesNotTreatHttpErrorsOrRedirectsAsSuccess(int status) throws Exception {
-        try (var failedServer = new TestHttpServer(status, "private server details")) {
-            var failedFacade = new ServerFacade(failedServer.port());
-            var error = assertThrows(ServerException.class, () -> failedFacade.login("player", "secret"));
-            assertEquals("The server could not complete the request. Please try again.", error.getMessage());
-        }
-    }
-
-    @Test
-    void loginReportsAnUnavailableServer() throws Exception {
-        var disconnected = new ServerFacade(TestHttpServer.stoppedPort());
-        var error = assertThrows(ServerException.class, () -> disconnected.login("player", "secret"));
-        assertEquals("Unable to reach the server. Please try again.", error.getMessage());
     }
 
     @Test
@@ -430,21 +348,136 @@ public class ServerFacadeTests {
         }
     }
 
+    @Test
+    void listGamesReturnsAnEmptyCollectionForAnEmptyDatabase() throws Exception {
+        var auth = facade.register("player", "secret", "p@example.com");
+        assertTrue(facade.listGames(auth.authToken()).games().isEmpty());
+    }
+
+    @Test
+    void listGamesReturnsAllNamesIdsAndPlayerSeatsForAnySignedInUser() throws Exception {
+        var auth = facade.register("player", "secret", "p@example.com");
+        var observer = facade.register("observer", "secret", "o@example.com");
+        String name = "Practice \"王\"";
+        int firstId = facade.createGame(auth.authToken(), name).gameID();
+        int secondId = facade.createGame(auth.authToken(), name).gameID();
+        int thirdId = facade.createGame(auth.authToken(), "Open").gameID();
+        storage.updateGame(new GameData(firstId, "player", "opponent", name, new ChessGame()));
+        storage.updateGame(new GameData(secondId, null, "opponent", name, new ChessGame()));
+
+        var games = facade.listGames(observer.authToken()).games().stream()
+                .collect(Collectors.toMap(GameSummary::gameID, Function.identity()));
+
+        assertEquals(Map.of(
+                firstId, new GameSummary(firstId, "player", "opponent", name),
+                secondId, new GameSummary(secondId, null, "opponent", name),
+                thirdId, new GameSummary(thirdId, null, null, "Open")), games);
+    }
+
+    @Test
+    void listGamesReadsFreshDataWithoutChangingEarlierResults() throws Exception {
+        var auth = facade.register("player", "secret", "p@example.com");
+        int id = facade.createGame(auth.authToken(), "Practice").gameID();
+        var earlier = facade.listGames(auth.authToken());
+        storage.updateGame(new GameData(id, "player", null, "Practice", new ChessGame()));
+
+        var current = facade.listGames(auth.authToken());
+
+        assertNull(earlier.games().iterator().next().whiteUsername());
+        assertEquals("player", current.games().iterator().next().whiteUsername());
+        assertThrows(UnsupportedOperationException.class, () -> current.games().clear());
+        assertEquals(1, storage.listGames().size());
+        facade.clear();
+        var fresh = facade.register("player", "secret", "p@example.com");
+        assertTrue(facade.listGames(fresh.authToken()).games().isEmpty());
+    }
+
     @ParameterizedTest
-    @ValueSource(ints = {302, 500})
-    void createGameReportsHttpFailureWithoutLeakingServerDetails(int status) throws Exception {
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "unknown", "token\nInjected", "token\rInjected"})
+    void invalidSessionCannotListGames(String token) throws Exception {
+        var auth = facade.register("player", "secret", "p@example.com");
+        int id = facade.createGame(auth.authToken(), "Practice").gameID();
+        var error = assertThrows(ServerException.class, () -> facade.listGames(token));
+        assertEquals("Your session is no longer valid. Please log in again.", error.getMessage());
+        assertNotNull(storage.getGame(id));
+    }
+
+    @Test
+    void revokedSessionCannotListGamesButFreshLoginCan() throws Exception {
+        var auth = facade.register("player", "secret", "p@example.com");
+        int id = facade.createGame(auth.authToken(), "Practice").gameID();
+        facade.logout(auth.authToken());
+        var error = assertThrows(ServerException.class, () -> facade.listGames(auth.authToken()));
+        assertEquals("Your session is no longer valid. Please log in again.", error.getMessage());
+        var login = facade.login("player", "secret");
+        assertEquals(id, facade.listGames(login.authToken()).games().iterator().next().gameID());
+    }
+
+    @Test
+    void listGamesUsesGetWithAuthorizationAndNoBody() throws Exception {
+        try (var http = new TestHttpServer(200, "{\"games\":[]}")) {
+            var client = new ServerFacade(http.port());
+            assertTrue(client.listGames("private-token").games().isEmpty());
+            var request = http.request();
+            assertEquals("GET", request.method());
+            assertEquals("/game", request.path());
+            assertEquals("private-token", request.authorization());
+            assertEquals("", request.body());
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "not-json",
+            "null",
+            "{}",
+            "{\"games\":null}",
+            "{\"games\":{}}",
+            "{\"games\":[null]}",
+            "{\"games\":[{\"gameID\":0,\"gameName\":\"Practice\"}]}",
+            "{\"games\":[{\"gameID\":1}]}",
+            "{\"games\":[{\"gameID\":1,\"gameName\":\" \"}]}"})
+    void invalidGameListIsNotReturnedAsAnEmptyOrUsableList(String response) throws Exception {
+        try (var http = new TestHttpServer(200, response)) {
+            var client = new ServerFacade(http.port());
+            var error = assertThrows(ServerException.class, () -> client.listGames("token"));
+            assertEquals("The server returned an invalid game-list response. Please try again.", error.getMessage());
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("httpFailures")
+    void httpFailuresDoNotLeakServerDetails(String operation, int status) throws Exception {
         try (var http = new TestHttpServer(status, "private database details")) {
             var client = new ServerFacade(http.port());
-            var error = assertThrows(ServerException.class, () -> client.createGame("token", "Practice"));
+            var error = assertThrows(ServerException.class, () -> callFacade(client, operation));
             assertEquals("The server could not complete the request. Please try again.", error.getMessage());
         }
     }
 
-    @Test
-    void createGameReportsAnUnavailableServer() throws Exception {
+    static Stream<Arguments> httpFailures() {
+        return Stream.of("clear", "register", "login", "create", "list")
+                .flatMap(operation -> Stream.of(302, 500).map(status -> Arguments.of(operation, status)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"clear", "register", "login", "create", "list"})
+    void unavailableServerIsReportedForEachOperation(String operation) throws Exception {
         var client = new ServerFacade(TestHttpServer.stoppedPort());
-        var error = assertThrows(ServerException.class, () -> client.createGame("token", "Practice"));
+        var error = assertThrows(ServerException.class, () -> callFacade(client, operation));
         assertEquals("Unable to reach the server. Please try again.", error.getMessage());
+    }
+
+    private void callFacade(ServerFacade client, String operation) throws ServerException {
+        switch (operation) {
+            case "clear" -> client.clear();
+            case "register" -> client.register("player", "secret", "p@example.com");
+            case "login" -> client.login("player", "secret");
+            case "create" -> client.createGame("token", "Practice");
+            case "list" -> client.listGames("token");
+            default -> throw new IllegalArgumentException("Unknown test operation: " + operation);
+        }
     }
 
 }
