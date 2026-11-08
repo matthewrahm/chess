@@ -1418,3 +1418,35 @@ and seat/error tests, then prelogin/postlogin command loops, board rendering,
 and play/observe flows. Keep Nov 12 for final verification/corrections and the TA
 pass-off target, with Nov 13 as buffer. Remote Phase 5 grade and TA demonstration
 remain pending. These local results do not establish completion of Phase 5.
+
+## November 7 - Phase 5 join game
+
+Implemented `ServerFacade.joinGame(String authToken, String playerColor, Integer gameID)`:
+PUT /game, authorization header, JSON from shared `request.JoinGameRequest` with
+only playerColor/gameID. Returns void on success. WHITE and BLACK are the API
+colors; the future UI will translate player input and displayed numbers. Occupied
+seats produce a specific safe message instead of the registration duplicate-name
+message. Existing 400/401/network handling remains shared. Server API unchanged.
+
+Tests cover either color, preserving the position/other seat, occupied-seat
+rejection (including repeat joins by the owner), joining the remaining seat,
+invalid colors/IDs, revoked sessions and fresh-login recovery, exact wire fields,
+HTTP failures and offline behavior. Consolidated invalid-session cases across
+logout/create/list/join; moved parameter data and invocation helpers to test
+support. Actual tests remain in ServerFacadeTests.java (492 lines), including
+assertions in every case. Fixed an extraction error caught by the first compile.
+
+Fresh final checks: 611 project tests passed, zero failures/errors/skips, with
+restricted database permissions. Facade 88/88 lines (100%); SQL 166/171 (97.08%).
+Public grader tools separately passed all 121 client cases at 100% facade coverage.
+Whole-project Checkstyle: zero findings. Evidence:
+`/tmp/chess-phase5/nov07-join-verified/`, `nov07-join-grader/`, `nov07-join-quality.log`.
+Disposable databases/accounts removed. No grading submission performed.
+
+Rechecked the current Phase 5/API instructions November 7. Starter HEAD remains
+d3ffc6639e2d78d0e88b3fe899936b995d8614e1. Grader HEAD is now
+ef1910bf7960de637c6f65373f21c29af4ebf35b; compared with the prior pinned revision,
+its only change is the server template POM's pom.basedir -> project.basedir fix.
+JUnit/JaCoCo/Checkstyle tools are unchanged. Supplied pass-off tests untouched.
+Handoff: main; eight Phase 5 milestones complete. Next today: prelogin console
+loop with help, quit, login/register, and a minimal signed-in/logout transition.

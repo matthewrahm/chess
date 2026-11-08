@@ -11,11 +11,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mindrot.jbcrypt.BCrypt;
 
-import java.util.stream.Stream;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -98,16 +96,6 @@ public class ServerFacadeTests extends ServerFacadeTestSupport {
         assertNull(storage.getUser(username));
     }
 
-    static Stream<Arguments> invalidRegistrations() {
-        return Stream.of(
-                Arguments.of(null, "secret", "p@example.com"),
-                Arguments.of(" ", "secret", "p@example.com"),
-                Arguments.of("player", null, "p@example.com"),
-                Arguments.of("player", "", "p@example.com"),
-                Arguments.of("player", "secret", null),
-                Arguments.of("player", "secret", " "));
-    }
-
     @Test
     void failedRegistrationDoesNotPreventLaterRegistration() throws Exception {
         assertThrows(ServerException.class, () -> facade.register("player", "", "p@example.com"));
@@ -181,11 +169,6 @@ public class ServerFacadeTests extends ServerFacadeTestSupport {
         assertEquals(original, storage.getUser("player"));
     }
 
-    static Stream<Arguments> invalidLogins() {
-        return Stream.of(Arguments.of(null, "secret"), Arguments.of(" ", "secret"),
-                Arguments.of("player", null), Arguments.of("player", ""));
-    }
-
     @ParameterizedTest
     @ValueSource(strings = {"not-json", "null", "{}", "{\"username\":\"player\"}",
             "{\"username\":\"player\",\"authToken\":\" \"}",
@@ -227,20 +210,6 @@ public class ServerFacadeTests extends ServerFacadeTestSupport {
         assertNull(storage.getAuth(registered.authToken()));
         assertNotEquals(registered.authToken(), loggedIn.authToken());
         assertEquals("player", storage.getAuth(loggedIn.authToken()).username());
-    }
-
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {" ", "unknown", "token\nInjected", "token\rInjected"})
-    void invalidLogoutPreservesValidSessionsAndAllowsRetry(String token) throws Exception {
-        var registered = facade.register("player", "secret", "p@example.com");
-
-        var error = assertThrows(ServerException.class, () -> facade.logout(token));
-
-        assertEquals("Your session is no longer valid. Please log in again.", error.getMessage());
-        assertNotNull(storage.getAuth(registered.authToken()));
-        facade.logout(registered.authToken());
-        assertNull(storage.getAuth(registered.authToken()));
     }
 
     @ParameterizedTest
@@ -290,15 +259,6 @@ public class ServerFacadeTests extends ServerFacadeTestSupport {
         var second = facade.createGame(auth.authToken(), "Practice");
         assertNotEquals(first.gameID(), second.gameID());
         assertEquals(2, storage.listGames().size());
-    }
-
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {" ", "unknown", "token\nInjected", "token\rInjected"})
-    void invalidSessionCannotCreateGame(String token) throws Exception {
-        var error = assertThrows(ServerException.class, () -> facade.createGame(token, "Practice"));
-        assertEquals("Your session is no longer valid. Please log in again.", error.getMessage());
-        assertTrue(storage.listGames().isEmpty());
     }
 
     @Test
@@ -392,17 +352,6 @@ public class ServerFacadeTests extends ServerFacadeTestSupport {
         assertTrue(facade.listGames(fresh.authToken()).games().isEmpty());
     }
 
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {" ", "unknown", "token\nInjected", "token\rInjected"})
-    void invalidSessionCannotListGames(String token) throws Exception {
-        var auth = facade.register("player", "secret", "p@example.com");
-        int id = facade.createGame(auth.authToken(), "Practice").gameID();
-        var error = assertThrows(ServerException.class, () -> facade.listGames(token));
-        assertEquals("Your session is no longer valid. Please log in again.", error.getMessage());
-        assertNotNull(storage.getGame(id));
-    }
-
     @Test
     void revokedSessionCannotListGamesButFreshLoginCan() throws Exception {
         var auth = facade.register("player", "secret", "p@example.com");
@@ -456,27 +405,87 @@ public class ServerFacadeTests extends ServerFacadeTestSupport {
         }
     }
 
-    static Stream<Arguments> httpFailures() {
-        return Stream.of("clear", "register", "login", "create", "list")
-                .flatMap(operation -> Stream.of(302, 500).map(status -> Arguments.of(operation, status)));
-    }
-
     @ParameterizedTest
-    @ValueSource(strings = {"clear", "register", "login", "create", "list"})
+    @ValueSource(strings = {"clear", "register", "login", "create", "list", "join"})
     void unavailableServerIsReportedForEachOperation(String operation) throws Exception {
         var client = new ServerFacade(TestHttpServer.stoppedPort());
         var error = assertThrows(ServerException.class, () -> callFacade(client, operation));
         assertEquals("Unable to reach the server. Please try again.", error.getMessage());
     }
 
-    private void callFacade(ServerFacade client, String operation) throws ServerException {
-        switch (operation) {
-            case "clear" -> client.clear();
-            case "register" -> client.register("player", "secret", "p@example.com");
-            case "login" -> client.login("player", "secret");
-            case "create" -> client.createGame("token", "Practice");
-            case "list" -> client.listGames("token");
-            default -> throw new IllegalArgumentException("Unknown test operation: " + operation);
+    @ParameterizedTest
+    @MethodSource("invalidSessions")
+    void invalidSessionsPreserveGamesAndValidSessions(String operation, String token) throws Exception {
+        var auth = facade.register("player", "secret", "p@example.com");
+        int id = facade.createGame(auth.authToken(), "Practice").gameID();
+        var original = storage.getGame(id);
+        var error = assertThrows(ServerException.class, () -> authenticatedCall(operation, token, id));
+        assertEquals("Your session is no longer valid. Please log in again.", error.getMessage());
+        assertEquals(original, storage.getGame(id));
+        assertEquals(1, storage.listGames().size());
+        assertNotNull(storage.getAuth(auth.authToken()));
+        assertDoesNotThrow(() -> authenticatedCall(operation, auth.authToken(), id));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"WHITE", "BLACK"})
+    void joinPreservesPositionAndOtherSeatAndRejectsOccupiedSeats(String color) throws Exception {
+        var player = facade.register("player", "secret", "p@example.com");
+        var other = facade.register("other", "secret", "o@example.com");
+        int id = facade.createGame(player.authToken(), "Practice").gameID();
+        var position = new ChessGame();
+        position.setTeamTurn(ChessGame.TeamColor.BLACK);
+        storage.updateGame(new GameData(id, null, null, "Practice", position));
+        facade.joinGame(player.authToken(), color, id);
+        var joined = storage.getGame(id);
+        assertEquals("player", color.equals("WHITE") ? joined.whiteUsername() : joined.blackUsername());
+        assertEquals(position, joined.game());
+        var error = assertThrows(ServerException.class, () -> facade.joinGame(other.authToken(), color, id));
+        assertEquals("That seat is already taken. Please choose another color or game.", error.getMessage());
+        assertThrows(ServerException.class, () -> facade.joinGame(player.authToken(), color, id));
+        assertEquals(joined, storage.getGame(id));
+        facade.joinGame(other.authToken(), color.equals("WHITE") ? "BLACK" : "WHITE", id);
+        var full = facade.listGames(player.authToken()).games().iterator().next();
+        assertEquals(color.equals("WHITE") ? "player" : "other", full.whiteUsername());
+        assertEquals(color.equals("BLACK") ? "player" : "other", full.blackUsername());
+        assertEquals(position, storage.getGame(id).game());
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidJoins")
+    void invalidJoinDoesNotChangeExistingGame(String color, Integer id) throws Exception {
+        var auth = facade.register("player", "secret", "p@example.com");
+        int existingId = facade.createGame(auth.authToken(), "Practice").gameID();
+        var original = storage.getGame(existingId);
+        var error = assertThrows(ServerException.class, () -> facade.joinGame(auth.authToken(), color, id));
+        assertEquals("Please check the information you entered.", error.getMessage());
+        assertEquals(original, storage.getGame(existingId));
+    }
+
+    @Test
+    void revokedSessionCannotJoinButFreshLoginCan() throws Exception {
+        var auth = facade.register("player", "secret", "p@example.com");
+        int id = facade.createGame(auth.authToken(), "Practice").gameID();
+        facade.logout(auth.authToken());
+        assertThrows(ServerException.class, () -> facade.joinGame(auth.authToken(), "WHITE", id));
+        assertNull(storage.getGame(id).whiteUsername());
+        var login = facade.login("player", "secret");
+        facade.joinGame(login.authToken(), "WHITE", id);
+        assertEquals("player", storage.getGame(id).whiteUsername());
+    }
+
+    @Test
+    void joinSendsPutWithColorAndGameIdAndTokenOnlyInHeader() throws Exception {
+        try (var http = new TestHttpServer(200, "{}")) {
+            assertDoesNotThrow(() -> new ServerFacade(http.port()).joinGame("private-token", "BLACK", 42));
+            var request = http.request();
+            assertEquals("PUT", request.method());
+            assertEquals("/game", request.path());
+            assertEquals("private-token", request.authorization());
+            var json = JsonParser.parseString(request.body()).getAsJsonObject();
+            assertEquals(2, json.size());
+            assertEquals("BLACK", json.get("playerColor").getAsString());
+            assertEquals(42, json.get("gameID").getAsInt());
         }
     }
 

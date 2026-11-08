@@ -5,6 +5,7 @@ import com.google.gson.JsonParseException;
 import model.AuthData;
 import request.CreateGameRequest;
 import request.LoginRequest;
+import request.JoinGameRequest;
 import request.RegisterRequest;
 import result.CreateGameResult;
 import result.LoginResult;
@@ -78,6 +79,11 @@ public class ServerFacade {
             }
         }
         return new ListGamesResult(List.copyOf(result.games()));
+    }
+
+    public void joinGame(String authToken, String playerColor, Integer gameID) throws ServerException {
+        requireToken(authToken);
+        send("PUT", "/game", new JoinGameRequest(null, playerColor, gameID), authToken);
     }
 
     private void requireToken(String authToken) throws ServerException {
@@ -155,7 +161,8 @@ public class ServerFacade {
             case 400 -> "Please check the information you entered.";
             case 401 -> method.equals("POST") && path.equals("/session")
                     ? "Incorrect username or password." : INVALID_SESSION;
-            case 403 -> "That username is already taken.";
+            case 403 -> method.equals("PUT") && path.equals("/game")
+                    ? "That seat is already taken. Please choose another color or game." : "That username is already taken.";
             default -> "The server could not complete the request. Please try again.";
         };
         return new ServerException(message);
