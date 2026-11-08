@@ -45,6 +45,7 @@ public class ConsoleClient {
             case "login" -> authenticate(false);
             case "register" -> authenticate(true);
             case "logout" -> logout();
+            case "create" -> createGame();
             case "" -> { }
             default -> output.println("Unknown command. Type help to see available commands.");
         }
@@ -58,6 +59,7 @@ public class ConsoleClient {
         } else {
             output.println("help     Show available commands");
             output.println("logout   Sign out of your account");
+            output.println("create   Create a new game");
         }
         output.println("quit     Exit Chess");
     }
@@ -82,6 +84,30 @@ public class ConsoleClient {
         }
         output.println("Signed in as " + session.username() + ".");
         help();
+    }
+
+    private void createGame() throws ServerException {
+        if (!requireSession()) {
+            return;
+        }
+        String name = read("Game name: ", false);
+        if (name == null) {
+            return;
+        }
+        if (name.isBlank()) {
+            output.println("Please enter a game name.");
+            return;
+        }
+        server.createGame(session.authToken(), name.trim());
+        output.println("Game created.");
+    }
+
+    private boolean requireSession() {
+        if (session == null) {
+            output.println("Please log in first.");
+            return false;
+        }
+        return true;
     }
 
     private void logout() throws ServerException {

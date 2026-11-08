@@ -4,10 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mindrot.jbcrypt.BCrypt;
-import ui.ConsoleClient;
-import ui.ConsoleInput;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -15,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Exercises real command text through the real HTTP facade and isolated SQL server. */
-class ConsoleClientTests extends ServerFacadeTestSupport {
+class ConsoleClientTests extends ConsoleTestSupport {
     @Test
     void helpUnknownCommandsAndQuitWorkWithoutConnecting() throws Exception {
         var offline = new ServerFacade(TestHttpServer.stoppedPort());
@@ -132,12 +129,4 @@ class ConsoleClientTests extends ServerFacadeTestSupport {
         assertFalse(bytes.toString(StandardCharsets.UTF_8).contains("Exception"));
     }
 
-    private String run(ServerFacade server, String commands) {
-        var bytes = new ByteArrayOutputStream();
-        var input = new ByteArrayInputStream(commands.getBytes(StandardCharsets.UTF_8));
-        try (var output = new PrintStream(bytes, true, StandardCharsets.UTF_8)) {
-            new ConsoleClient(server, new ConsoleInput(input, null), output).run();
-        }
-        return bytes.toString(StandardCharsets.UTF_8);
-    }
 }

@@ -1476,3 +1476,23 @@ Next: signed-in create/list commands with display-number-to-gameID mapping, then
 play/observe and board rendering. Keep Nov 12 for final checks and the TA pass-off
 target, with Nov 13 as buffer. Remote grading and the TA demonstration are pending;
 Phase 5 is not yet complete.
+
+## November 8 - Phase 5 console game creation
+
+Added the signed-in create command using the existing
+ServerFacade.createGame(authToken, gameName) interface. Prompts for a game name,
+trims outer whitespace, rejects blank input, and confirms success without exposing
+the internal ID. Creating a game leaves both seats empty. Signed-out users cannot
+issue requests; EOF stops cleanly and a rejected create permits another attempt.
+Extracted shared console test input/output into ConsoleTestSupport. Six new cases
+exercise HTTP/SQL-backed creation, duplicate names, blank input, EOF, a server
+rejection followed by retry, and session gating before/after logout.
+
+Fresh checks: 634 tests passed, zero failures/errors/skips. Facade coverage 88/88
+(100%); SQL 166/171 (97.08%). Whole-project Checkstyle: zero findings. Evidence:
+/tmp/chess-phase5/nov08-create-console/ and nov08-create-quality.log. Disposable
+database/account removed. No grading configuration or supplied tests changed.
+Rechecked upstream: starter d3ffc6639e2d78d0e88b3fe899936b995d8614e1 and grader
+ef1910bf7960de637c6f65373f21c29af4ebf35b remain unchanged. Current published Phase 5
+requirements match yesterday's copy. Handoff: main; ten Phase 5 milestones. Next
+today: numbered game listing with player names and safe display formatting.

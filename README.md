@@ -52,8 +52,9 @@ java -jar client/target/client-test-dependencies.jar [port]
 The optional port defaults to 8080. Start the server separately before signing in.
 The client supports `help`, `quit`, `login`, and `register`; registration signs you
 in automatically. Use `logout` to return to the signed-out prompt. Password entry
-is hidden when running in a terminal with a Java console. Game commands and board
-rendering are the next Phase 5 milestones.
+is hidden when running in a terminal with a Java console. Once signed in, `create`
+prompts for a game name and creates a game with both seats open. Listing games,
+joining/observing, and board rendering are the next Phase 5 milestones.
 
 ## Phase 4: Persistent database
 
