@@ -1496,3 +1496,43 @@ Rechecked upstream: starter d3ffc6639e2d78d0e88b3fe899936b995d8614e1 and grader
 ef1910bf7960de637c6f65373f21c29af4ebf35b remain unchanged. Current published Phase 5
 requirements match yesterday's copy. Handoff: main; ten Phase 5 milestones. Next
 today: numbered game listing with player names and safe display formatting.
+
+## November 8 - Phase 5 numbered game list
+
+Added signed-in list, calling ServerFacade.listGames(authToken) on every request.
+GameListView.print(ListGamesResult, PrintStream) renders consecutive numbers from
+1, names, and White/Black players or (open). Results are sorted by internal ID for
+stable ordering, but IDs are never displayed. Empty results suggest create.
+Control characters in returned names are replaced with spaces to preserve one
+terminal row per game. Shared result.GameSummary remains the public data shape;
+server APIs and authentication headers are unchanged.
+
+Six console cases verify login/logout gating, empty results, newly created games,
+both players, and recovery after a failed listing without redisplaying old data.
+Four standalone view cases cover sparse internal IDs, duplicate names, stable
+ordering, empty lists, Unicode, and control characters. Extended the existing
+controlled HTTP test server to support request-dependent responses. All actual
+facade tests remain in the required client/ServerFacadeTests.java.
+
+Fresh checks: 644 project tests passed with zero failures/errors/skips; facade
+88/88 lines (100%), SQL 166/171 (97.08%). Public grader tools independently passed
+150 client-package cases at 100% facade coverage; the four ui-package view tests
+are additional Maven tests outside that selection. Whole-project Checkstyle had
+zero findings. Packaging passed. A packaged-jar smoke test against a controlled
+HTTP server verified register/create/list/logout, request authentication, and
+absence of tokens/internal IDs in output. Console integration tests also ran
+against the real HTTP/SQL server with a restricted disposable database account.
+Evidence: /tmp/chess-phase5/nov08-list-console/, nov08-list-grader/,
+nov08-list-quality.log, nov08-list-package.log, nov08-console-smoke.txt. All test
+databases/accounts were removed. No grading configuration or supplied tests
+changed; upstream revisions remain as recorded in today's preceding entry.
+
+Handoff: main; eleven Phase 5 milestones complete. Today's two commits add create
+and list commands. Next: board rendering, then play/observe with explicit mapping
+from the displayed number to the corresponding gameID. Keep the same sorted
+snapshot when resolving a user's selection. Before final pass-off, also implement
+expired-session recovery: the current console retains its session after any
+ServerException, so an expired login currently requires restarting the client.
+Interactive password hiding, full client demonstration, remote grading, and TA
+pass-off remain pending. Keep Nov 12 for final verification and the TA target,
+with Nov 13 as buffer. Phase 5 is still in progress.

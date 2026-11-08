@@ -53,8 +53,9 @@ The optional port defaults to 8080. Start the server separately before signing i
 The client supports `help`, `quit`, `login`, and `register`; registration signs you
 in automatically. Use `logout` to return to the signed-out prompt. Password entry
 is hidden when running in a terminal with a Java console. Once signed in, `create`
-prompts for a game name and creates a game with both seats open. Listing games,
-joining/observing, and board rendering are the next Phase 5 milestones.
+prompts for a game name and creates a game with both seats open. Use `list` to see
+current games, numbered from 1, with each player name or an open-seat label.
+Joining/observing and board rendering are the next Phase 5 milestones.
 
 ## Phase 4: Persistent database
 

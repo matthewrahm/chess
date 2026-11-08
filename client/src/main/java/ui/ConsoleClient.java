@@ -46,6 +46,7 @@ public class ConsoleClient {
             case "register" -> authenticate(true);
             case "logout" -> logout();
             case "create" -> createGame();
+            case "list" -> listGames();
             case "" -> { }
             default -> output.println("Unknown command. Type help to see available commands.");
         }
@@ -60,6 +61,7 @@ public class ConsoleClient {
             output.println("help     Show available commands");
             output.println("logout   Sign out of your account");
             output.println("create   Create a new game");
+            output.println("list     List games and available seats");
         }
         output.println("quit     Exit Chess");
     }
@@ -100,6 +102,14 @@ public class ConsoleClient {
         }
         server.createGame(session.authToken(), name.trim());
         output.println("Game created.");
+    }
+
+    private void listGames() throws ServerException {
+        if (!requireSession()) {
+            return;
+        }
+        var games = server.listGames(session.authToken());
+        new GameListView().print(games, output);
     }
 
     private boolean requireSession() {
