@@ -1450,3 +1450,29 @@ its only change is the server template POM's pom.basedir -> project.basedir fix.
 JUnit/JaCoCo/Checkstyle tools are unchanged. Supplied pass-off tests untouched.
 Handoff: main; eight Phase 5 milestones complete. Next today: prelogin console
 loop with help, quit, login/register, and a minimal signed-in/logout transition.
+
+## November 7 - Phase 5 prelogin console
+
+Replaced the starter client entry point with a console command loop supporting
+help, quit, login, registration with automatic sign-in, and logout. ConsoleClient
+owns session state and calls existing ServerFacade APIs. ConsoleInput handles
+terminal/password input and EOF; passwords use Console.readPassword when a Java
+console is available. ClientMain accepts an optional server port (default 8080)
+and reports invalid arguments without a stack trace. No server interfaces changed.
+
+Added 17 console cases covering authentication transitions, retries, duplicate
+users, signed-in account-switch protection, EOF, outages, malformed responses,
+secret-free output, logout authorization headers, and invalid ports. Fresh checks:
+628 project tests passed with zero failures/errors/skips; official public grader
+tools separately passed 138 client tests. Facade 88/88 lines (100%); SQL 166/171
+(97.08%). Whole-project Checkstyle reported zero findings. Packaging succeeded;
+three packaged-client smoke checks passed (help/quit, EOF during login, bad port).
+Interactive terminal password hiding remains a manual demonstration check.
+Evidence: /tmp/chess-phase5/nov07-prelogin/, nov07-prelogin-grader/,
+nov07-prelogin-quality.log, nov07-prelogin-package.log, nov07-prelogin-smoke.log.
+
+Handoff: main; nine Phase 5 milestones complete, including today's two commits.
+Next: signed-in create/list commands with display-number-to-gameID mapping, then
+play/observe and board rendering. Keep Nov 12 for final checks and the TA pass-off
+target, with Nov 13 as buffer. Remote grading and the TA demonstration are pending;
+Phase 5 is not yet complete.

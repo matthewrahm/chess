@@ -46,10 +46,14 @@ These commands are configured by the `pom.xml` (Project Object Model) files. The
 Once you have compiled your project into an uber jar, you can execute it with the following command.
 
 ```sh
-java -jar client/target/client-jar-with-dependencies.jar
-
-♕ 240 Chess Client: chess.ChessPiece@7852e922
+java -jar client/target/client-test-dependencies.jar [port]
 ```
+
+The optional port defaults to 8080. Start the server separately before signing in.
+The client supports `help`, `quit`, `login`, and `register`; registration signs you
+in automatically. Use `logout` to return to the signed-out prompt. Password entry
+is hidden when running in a terminal with a Java console. Game commands and board
+rendering are the next Phase 5 milestones.
 
 ## Phase 4: Persistent database
 
