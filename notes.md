@@ -1536,3 +1536,28 @@ ServerException, so an expired login currently requires restarting the client.
 Interactive password hiding, full client demonstration, remote grading, and TA
 pass-off remain pending. Keep Nov 12 for final verification and the TA target,
 with Nov 13 as buffer. Phase 5 is still in progress.
+
+## November 9 - Phase 5 board renderer
+
+Added BoardRenderer.render(ChessBoard, TeamColor), returning ANSI text without
+mutating the board. White has a1 at bottom left; Black has a1 at upper right.
+Both views show rank/file labels on all sides, alternating white/gray squares,
+and black text with uppercase White pieces and lowercase Black pieces. This
+avoids Unicode chess-glyph width differences. The console will explain the piece
+legend when the renderer is connected to play/observe in today's next commit.
+
+Six renderer cases verify both orientations, all starting piece types, arbitrary
+positions, board preservation, equal row widths, square colors, and terminal
+color resets. Corrected two initial test expectations: border padding and an
+empty-square assertion that accidentally inspected the file labels. Final full
+suite: 650 tests passed, zero failures/errors/skips. Facade 88/88 lines (100%);
+SQL 166/171 (97.08%). Whole-project Checkstyle: zero findings. Visually inspected
+both views from the actual ANSI output using an SVG/PNG preview. Evidence:
+/tmp/chess-phase5/nov09-board/, nov09-board-quality.log, nov09-board-preview.txt,
+nov09-board-preview.svg.png. Temporary test database/account removed.
+
+Current Phase 5 requirements still match November 8. Starter and public grader
+HEADs remain d3ffc6639e2d78d0e88b3fe899936b995d8614e1 and
+ef1910bf7960de637c6f65373f21c29af4ebf35b. Supplied tests/configuration unchanged.
+Handoff: main; twelve Phase 5 milestones. Renderer is ready for today's next
+commit: play/observe selection, board screen navigation, and session recovery.
