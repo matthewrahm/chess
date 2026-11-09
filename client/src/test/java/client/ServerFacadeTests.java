@@ -419,7 +419,7 @@ public class ServerFacadeTests extends ServerFacadeTestSupport {
         var auth = facade.register("player", "secret", "p@example.com");
         int id = facade.createGame(auth.authToken(), "Practice").gameID();
         var original = storage.getGame(id);
-        var error = assertThrows(ServerException.class, () -> authenticatedCall(operation, token, id));
+        var error = assertThrows(SessionExpiredException.class, () -> authenticatedCall(operation, token, id));
         assertEquals("Your session is no longer valid. Please log in again.", error.getMessage());
         assertEquals(original, storage.getGame(id));
         assertEquals(1, storage.listGames().size());

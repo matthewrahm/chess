@@ -88,7 +88,7 @@ public class ServerFacade {
 
     private void requireToken(String authToken) throws ServerException {
         if (authToken == null || authToken.isBlank() || authToken.contains("\r") || authToken.contains("\n")) {
-            throw new ServerException(INVALID_SESSION);
+            throw new SessionExpiredException(INVALID_SESSION);
         }
     }
 
@@ -157,10 +157,12 @@ public class ServerFacade {
     }
 
     private ServerException responseError(int status, String method, String path) {
+        if (status == 401 && !(method.equals("POST") && path.equals("/session"))) {
+            return new SessionExpiredException(INVALID_SESSION);
+        }
         String message = switch (status) {
             case 400 -> "Please check the information you entered.";
-            case 401 -> method.equals("POST") && path.equals("/session")
-                    ? "Incorrect username or password." : INVALID_SESSION;
+            case 401 -> "Incorrect username or password.";
             case 403 -> method.equals("PUT") && path.equals("/game")
                     ? "That seat is already taken. Please choose another color or game." : "That username is already taken.";
             default -> "The server could not complete the request. Please try again.";

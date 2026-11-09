@@ -5,20 +5,22 @@ import result.ListGamesResult;
 
 import java.io.PrintStream;
 import java.util.Comparator;
+import java.util.List;
 
 /** Displays public game details with consecutive numbers instead of internal IDs. */
 public class GameListView {
-    public void print(ListGamesResult result, PrintStream output) {
+    public List<GameSummary> print(ListGamesResult result, PrintStream output) {
         var games = result.games().stream().sorted(Comparator.comparingInt(GameSummary::gameID)).toList();
         if (games.isEmpty()) {
             output.println("No games yet. Use create to start one.");
-            return;
+            return games;
         }
         for (int index = 0; index < games.size(); index++) {
             var game = games.get(index);
             output.printf("%d. %s | White: %s | Black: %s%n", index + 1,
                     displayText(game.gameName()), displayText(game.whiteUsername()), displayText(game.blackUsername()));
         }
+        return games;
     }
 
     private String displayText(String value) {

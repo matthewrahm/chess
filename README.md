@@ -55,7 +55,15 @@ in automatically. Use `logout` to return to the signed-out prompt. Password entr
 is hidden when running in a terminal with a Java console. Once signed in, `create`
 prompts for a game name and creates a game with both seats open. Use `list` to see
 current games, numbered from 1, with each player name or an open-seat label.
-Joining/observing and board rendering are the next Phase 5 milestones.
+Use `play` to display a fresh game list, choose its number, and select `white` or
+`black`. Use `observe` to choose a game and view it from White's perspective
+without taking a seat. Enter `cancel` at either selection prompt to return.
+
+The board shows the initial position with uppercase White pieces and lowercase
+Black pieces. Its orientation follows your chosen color. On the board screen,
+use `redraw` to display it again or `back` to return to the lobby while keeping
+your seat. `help`, `logout`, and `quit` are also available. Expired sessions return
+you to the login prompt. Live game updates and moves belong to Phase 6.
 
 ## Phase 4: Persistent database
 

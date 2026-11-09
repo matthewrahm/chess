@@ -1561,3 +1561,47 @@ HEADs remain d3ffc6639e2d78d0e88b3fe899936b995d8614e1 and
 ef1910bf7960de637c6f65373f21c29af4ebf35b. Supplied tests/configuration unchanged.
 Handoff: main; twelve Phase 5 milestones. Renderer is ready for today's next
 commit: play/observe selection, board screen navigation, and session recovery.
+
+
+## November 9 - Phase 5 play, observe, and session recovery
+
+Added play/observe commands and board navigation to ui/ConsoleClient. Selection
+uses the same immutable, sorted List<GameSummary> returned by GameListView.print
+that was displayed to the user. Play calls ServerFacade.joinGame with the selected
+internal ID and WHITE/BLACK using the existing authorization header and shared
+request.JoinGameRequest. Observe displays the initial position from White's
+perspective without taking a seat or calling join. Invalid selections, cancel,
+and EOF do not join. Board commands include redraw, back, help, logout, and quit;
+back returns to the lobby while preserving the player's seat. Phase 5 displays
+the initial position only; live updates and moves remain Phase 6 work.
+
+Added client/SessionExpiredException, a ServerException subtype for invalid tokens
+and protected-request HTTP 401 responses. The console clears login and board state
+on this error and permits signing in again. Bad login credentials remain an
+ordinary ServerException, and temporary server failures preserve the session for
+retry. Existing endpoint signatures, shared request/result types, and server
+implementation are unchanged. README now describes the implemented commands.
+
+Verification: 678 project tests passed with zero failures/errors/skips. Added
+23 play/observe cases and five session recovery cases; integration cases use the
+real HTTP/SQL server, and controlled HTTP cases cover sparse IDs, exact selection
+mapping, expired sessions, and temporary failures. Facade coverage is 89/89 lines
+(100%); SQL is 166/171 (97.08%). Public grader tools independently passed 178
+client-package tests at 100% facade coverage. Whole-project Checkstyle reported
+zero findings. Packaging succeeded. The packaged client passed a complete
+register/create/list/play/redraw/back/observe/logout smoke run, and an actual
+pseudo-terminal check confirmed Java console password input is hidden. The smoke
+run uses a controlled HTTP server; the full suite supplies real SQL integration.
+Both board perspectives were visually inspected in today's preceding milestone.
+
+Evidence: /tmp/chess-phase5/nov09-play/, nov09-play-grader/,
+nov09-play-quality.log, nov09-play-package.log, nov09-client-smoke.txt, and
+nov09-password-pty.txt. Temporary test databases/accounts were removed. Supplied
+tests and grading configuration are unchanged; upstream revisions remain as
+recorded above.
+
+Handoff: main; thirteen Phase 5 milestones including today's two commits. Next:
+final client/server demonstration rehearsal and rubric review, then remote grading
+and TA pass-off. Those external checks are still pending; local checks do not
+establish a full-credit grade. Keep Nov 12 as the final-check/TA target and Nov 13
+as buffer from the existing plan.
