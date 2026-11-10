@@ -1605,3 +1605,28 @@ final client/server demonstration rehearsal and rubric review, then remote gradi
 and TA pass-off. Those external checks are still pending; local checks do not
 establish a full-credit grade. Keep Nov 12 as the final-check/TA target and Nov 13
 as buffer from the existing plan.
+
+## November 10 - Phase 5 safe terminal names
+
+Fixed the sign-in greeting printing raw account names. DisplayText.singleLine
+now replaces terminal controls, Unicode line separators, and directional controls
+with spaces in greetings and game listings. Stored usernames, authentication,
+and player-seat identity remain unchanged. Ordinary Unicode and emoji sequences
+are preserved. The formatter is a UI-only helper; HTTP contracts are unchanged.
+
+Verification: 704 tests passed, zero failures/errors/skips. Added 24 display cases
+and two real HTTP/SQL console flows covering login/registration, joining, listing,
+and logout with control characters in the username. Facade coverage remains
+89/89 lines (100%); SQL 166/171 (97.08%). Official Checkstyle reported zero findings.
+Reviewed the changed code against the current naming, decomposition, readability,
+and package criteria; the shared UI helper removes duplicated output filtering.
+Evidence: /tmp/chess-phase5/nov10-display/ and nov10-display-quality.log. Temporary
+database/account removed. Refetched current Phase 5 instructions and rubric;
+starter HEAD d3ffc6639e2d78d0e88b3fe899936b995d8614e1 and grader HEAD
+ef1910bf7960de637c6f65373f21c29af4ebf35b remain unchanged. Supplied tests and grading
+configuration were not edited. Public grader tools were downloaded again at that
+pinned revision because most older temporary tool JARs had been removed.
+
+Handoff: main; fourteen Phase 5 milestones. Today's second commit will add a
+repeatable packaged-client/server rehearsal using an isolated MySQL catalog.
+Remote grading, whole-project final rubric review, and TA pass-off remain pending.

@@ -27,10 +27,6 @@ public class GameListView {
         if (value == null) {
             return "(open)";
         }
-        var text = new StringBuilder();
-        for (char character : value.toCharArray()) {
-            text.append(Character.isISOControl(character) ? ' ' : character);
-        }
-        return text.toString();
+        return DisplayText.singleLine(value);
     }
 }

@@ -115,7 +115,7 @@ public class ConsoleClient {
             var result = server.login(username, password);
             session = new AuthData(result.authToken(), result.username());
         }
-        output.println("Signed in as " + session.username() + ".");
+        output.println("Signed in as " + DisplayText.singleLine(session.username()) + ".");
         help();
     }
 
