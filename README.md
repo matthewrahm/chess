@@ -65,6 +65,28 @@ use `redraw` to display it again or `back` to return to the lobby while keeping
 your seat. `help`, `logout`, and `quit` are also available. Expired sessions return
 you to the login prompt. Live game updates and moves belong to Phase 6.
 
+## Packaged Phase 5 rehearsal
+
+After building both JARs, run the client/server rehearsal with Java 21:
+
+```sh
+python3 scripts/verify_packaged_client.py --output /tmp/chess-client-rehearsal
+```
+
+Use a new output directory for each run, keep MySQL running, and leave port 8080
+free. The local account in `db.properties` must be allowed to create a temporary
+database. The script copies the server JAR with a disposable database configuration
+and runs the actual client JAR through registration, creation, listing, both player
+colors, observation, logout, and login. It also checks invalid input, occupied
+seats, server restart persistence, an offline server, and invalid startup arguments.
+
+Client transcripts are saved in the output directory. The temporary server,
+database, and copied JAR are cleaned up; development data and configuration are
+unchanged. Optional `--client-jar`, `--server-jar`, and `--config` arguments select
+other local inputs. This rehearsal supplements unit tests and visual checks; it
+does not submit the assignment or replace the TA demonstration. Password hiding
+requires a separate interactive terminal check because this script pipes input.
+
 ## Phase 4: Persistent database
 
 Install MySQL 8.4 LTS and start it before running the database tests. On macOS

@@ -1630,3 +1630,35 @@ pinned revision because most older temporary tool JARs had been removed.
 Handoff: main; fourteen Phase 5 milestones. Today's second commit will add a
 repeatable packaged-client/server rehearsal using an isolated MySQL catalog.
 Remote grading, whole-project final rubric review, and TA pass-off remain pending.
+
+## November 10 - Phase 5 packaged client/server rehearsal
+
+Added scripts/verify_packaged_client.py. It reuses the existing packaged-server
+fixture and cleanup routine to run the built client and server JARs against a
+unique disposable MySQL catalog. No development catalog is cleared. A discarded
+seed game makes the real game's ID differ from displayed selection 1. Two players
+register and take opposite seats; invalid numbers/colors and occupied-seat retries
+are checked. An observer views the full game without changing its players. Checks
+also cover logout, wrong-password retry, board perspectives/redraw, persistence
+across server JVM restart, fresh client login, an offline server, and invalid
+startup arguments. Subprocess timeouts prevent a stuck rehearsal. README includes
+the command, prerequisites, cleanup behavior, and optional file arguments.
+
+The new script passed using the current packaged artifacts, with client transcripts
+in /tmp/chess-phase5/nov10-packaged-client/ and the run log alongside it. Both JARs
+packaged successfully. All checks completed and the disposable catalog was removed.
+Python compilation and git diff --check passed. The public grader's pinned tools
+also passed all 180 client-package tests, with facade coverage 89/89 (100%). The
+full Maven suite from today's first commit passed 704 cases, including 34 UI tests
+outside that client-only selection; SQL coverage 166/171 (97.08%), official
+Checkstyle zero findings. No Java code changed after those checks. Evidence:
+nov10-grader/, nov10-grader.log, nov10-package.log, nov10-packaged-client.log under
+/tmp/chess-phase5. Public tools use the revision recorded in today's first entry.
+
+Handoff: main; fifteen Phase 5 milestones. Today's two commits fix unsafe name
+rendering and make the packaged pregame rehearsal repeatable. The new script uses
+piped input; terminal password hiding was verified November 9 and is not retested
+by this rehearsal. Next: final visual/whole-project rubric review, remote grading,
+and TA demonstration. Keep the planned Nov 12 final-check/TA target and Nov 13
+buffer. Local tests, coverage, Checkstyle, and packaging results do not guarantee
+remote full credit. No server API or shared schema changes were needed today.
