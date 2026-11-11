@@ -1683,3 +1683,43 @@ The isolated test database and account were removed.
 Handoff: main; sixteen Phase 5 milestones. Next is today's final requirements and
 source review, packaged rehearsal, and a concise TA demonstration guide. Remote
 Phase 5 grading and the TA demonstration are still pending.
+
+## November 11 - Phase 5 final review and pass-off guide
+
+Added docs/phase5-passoff.md and linked it from README. The guide records the
+current verification results, a concrete two-player/observer demonstration,
+reproduction pointers, and the remaining remote grading/TA steps. It separates
+complete pregame work from future Phase 6 live gameplay. No APIs or production
+code changed after b8df9d9.
+
+Reviewed all 62 production Java files across shared, server, and client plus the
+Maven/assembly configuration against the current quality rubric. Responsibilities
+are separated between UI, facade, HTTP handlers, services, storage, and chess
+rules; no blocking quality finding was identified. Official Checkstyle checks
+production and test code separately from Maven and reported zero findings.
+Current starter revision d3ffc6639e2d78d0e88b3fe899936b995d8614e1 matches all 21
+active supplied Java test/helper files byte-for-byte. Phase 5's scaffold sample
+was intentionally replaced with student facade tests in the required location;
+Phase 6 tests remain inactive starter files. Current course revision is
+0fc1a36abbeba9b30854fd223d51fb230581fe16; requirements, quality rubric, and TA tips
+were fetched and inspected. Public tools remain at
+ ef1910bf7960de637c6f65373f21c29af4ebf35b.
+
+Final evidence: 710 full-suite tests passed, facade 90/90 (100%), SQL 166/171
+(97.08%). Public grader tools passed 186 client-package cases at 100% facade
+coverage; the full suite also includes 34 UI cases. Both executable JARs built
+successfully. Today's isolated packaged rehearsal passed create/list/play,
+both perspectives, full-game observation, occupied seats, invalid selection,
+login retry/logout, server restart persistence, outage recovery messaging, and
+startup-argument checks. Temporary databases/accounts were removed. Evidence:
+/tmp/chess-phase5/nov11-auth/, nov11-grader/, nov11-packaged-client/,
+nov11-provided-tests.json, nov11-quality.log, and nov11-package.log. November 9's
+visual board/password checks are historical and clearly labeled in the guide;
+the affected rendering/password implementation has not changed.
+
+Handoff: main; seventeen Phase 5 milestones after today's two commits. Required
+pregame implementation is complete according to the reviewed requirements and
+local evidence. Next concrete step is remote Phase 5 grading, then TA pass-off;
+no remote result or completed TA assessment is claimed. The broader Chess project
+still needs Phase 6 gameplay. Keep the existing Nov 12 pass-off target and Nov 13
+buffer as planning dates, not a newly verified course deadline.

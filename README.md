@@ -67,6 +67,9 @@ you to the login prompt. Live game updates and moves belong to Phase 6.
 
 ## Packaged Phase 5 rehearsal
 
+See the [Phase 5 pass-off guide](docs/phase5-passoff.md) for the latest verification
+results, demonstration sequence, and remaining submission steps.
+
 After building both JARs, run the client/server rehearsal with Java 21:
 
 ```sh
