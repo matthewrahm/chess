@@ -87,9 +87,13 @@ public class ServerFacade {
     }
 
     private void requireToken(String authToken) throws ServerException {
-        if (authToken == null || authToken.isBlank() || authToken.contains("\r") || authToken.contains("\n")) {
+        if (!isUsableToken(authToken)) {
             throw new SessionExpiredException(INVALID_SESSION);
         }
+    }
+
+    private boolean isUsableToken(String authToken) {
+        return authToken != null && !authToken.isBlank() && !authToken.contains("\r") && !authToken.contains("\n");
     }
 
     private AuthData authenticate(String path, Object request, String username, String operation) throws ServerException {
@@ -97,7 +101,7 @@ public class ServerFacade {
         String invalidResponse = "The server returned an invalid " + operation + " response. Please try again.";
         var auth = readResponse(json, AuthData.class, invalidResponse);
         if (auth.username() == null || !auth.username().equals(username)
-                || auth.authToken() == null || auth.authToken().isBlank()) {
+                || !isUsableToken(auth.authToken())) {
             throw new ServerException(invalidResponse);
         }
         return auth;

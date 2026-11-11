@@ -75,6 +75,37 @@ class ConsoleSessionTests extends ConsoleTestSupport {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"login", "register"})
+    void unusableAuthenticationTokenLeavesConsoleSignedOutAndAllowsRetry(String operation) throws Exception {
+        var logins = new AtomicInteger();
+        var protectedRequests = new AtomicInteger();
+        try (var http = new TestHttpServer(request -> {
+            if (request.method().equals("POST")) {
+                if (logins.incrementAndGet() == 1) {
+                    return new TestHttpServer.Response(200,
+                            "{\"username\":\"player\",\"authToken\":\"private-token\\nvalue\"}");
+                }
+                return authentication(logins.get());
+            }
+            protectedRequests.incrementAndGet();
+            return new TestHttpServer.Response(200, GAMES);
+        })) {
+            String first = operation + "\nplayer\nsecret\n" + (operation.equals("register") ? "p@example.com\n" : "");
+            String output = run(new ServerFacade(http.port()), first + "list\n" + LOGIN + "list\nquit\n");
+            assertEquals(2, logins.get());
+            assertEquals(1, protectedRequests.get());
+            assertTrue(output.contains("The server returned an invalid"));
+            assertEquals(1, output.split("Signed in as player.", -1).length - 1);
+            String beforeRetry = output.substring(0, output.indexOf("Signed in as player."));
+            assertFalse(beforeRetry.contains("[SIGNED IN]"));
+            assertTrue(beforeRetry.contains("Please log in first."));
+            assertTrue(output.contains("1. Practice"));
+            assertFalse(output.contains("private-token"));
+            assertEquals("private-token-2", http.request().authorization());
+        }
+    }
+
     private TestHttpServer.Response authentication(int number) {
         return new TestHttpServer.Response(200,
                 "{\"username\":\"player\",\"authToken\":\"private-token-" + number + "\"}");

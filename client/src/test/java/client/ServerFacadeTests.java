@@ -108,6 +108,8 @@ public class ServerFacadeTests extends ServerFacadeTestSupport {
 
     @ParameterizedTest
     @ValueSource(strings = {"not-json", "null", "{}", "{\"username\":\"player\"}",
+            "{\"username\":\"player\",\"authToken\":\"token\\rvalue\"}",
+            "{\"username\":\"player\",\"authToken\":\"token\\nvalue\"}",
             "{\"username\":\"player\",\"authToken\":\"\"}", "{\"username\":\"other\",\"authToken\":\"token\"}"})
     void invalidRegistrationResponseIsReportedAsFailure(String response) throws Exception {
         try (var invalidServer = new TestHttpServer(200, response)) {
@@ -171,6 +173,8 @@ public class ServerFacadeTests extends ServerFacadeTestSupport {
 
     @ParameterizedTest
     @ValueSource(strings = {"not-json", "null", "{}", "{\"username\":\"player\"}",
+            "{\"username\":\"player\",\"authToken\":\"token\\rvalue\"}",
+            "{\"username\":\"player\",\"authToken\":\"token\\nvalue\"}",
             "{\"username\":\"player\",\"authToken\":\" \"}",
             "{\"username\":\"other\",\"authToken\":\"token\"}"})
     void invalidLoginResponseDoesNotReturnASession(String response) throws Exception {

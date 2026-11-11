@@ -1662,3 +1662,24 @@ by this rehearsal. Next: final visual/whole-project rubric review, remote gradin
 and TA demonstration. Keep the planned Nov 12 final-check/TA target and Nov 13
 buffer. Local tests, coverage, Checkstyle, and packaging results do not guarantee
 remote full credit. No server API or shared schema changes were needed today.
+
+## November 11 - Reject unusable authentication responses
+
+Registration and login now apply the same token validation as protected requests.
+A successful HTTP response containing a token with a carriage return or newline
+is reported as an invalid authentication response immediately, so the console
+stays signed out instead of announcing success and failing on the next command.
+The shared predicate preserves the existing protected-request session-expiry
+behavior. No endpoint, request, result, or stored-identity contract changed.
+
+Added four facade response cases and two console flows proving a rejected token
+cannot authorize a request, no sign-in success is printed, and a fresh login can
+be retried successfully. Verification: 710 Maven tests, zero failures/errors/skips;
+ServerFacade 90/90 lines (100%), SQL 166/171 (97.08%); official whole-project
+Checkstyle zero findings; git diff --check passed. Evidence is under
+/tmp/chess-phase5/nov11-auth/ with nov11-auth.log and nov11-quality.log alongside.
+The isolated test database and account were removed.
+
+Handoff: main; sixteen Phase 5 milestones. Next is today's final requirements and
+source review, packaged rehearsal, and a concise TA demonstration guide. Remote
+Phase 5 grading and the TA demonstration are still pending.
