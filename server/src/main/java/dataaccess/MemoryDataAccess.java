@@ -55,24 +55,29 @@ public class MemoryDataAccess implements DataAccess {
 
     @Override
     public synchronized Collection<GameData> listGames() {
-        return new ArrayList<>(games.values());
+        var result = new ArrayList<GameData>();
+        for (GameData game : games.values()) {
+            result.add(game.copy());
+        }
+        return result;
     }
 
     @Override
     public synchronized int createGame(String gameName, ChessGame game) {
         int gameID = nextGameID++;
-        games.put(gameID, new GameData(gameID, null, null, gameName, game));
+        games.put(gameID, new GameData(gameID, null, null, gameName, game.copy()));
         return gameID;
     }
 
     @Override
     public synchronized GameData getGame(int gameID) {
-        return games.get(gameID);
+        GameData game = games.get(gameID);
+        return game == null ? null : game.copy();
     }
 
     @Override
     public synchronized void updateGame(GameData game) throws DataAccessException {
-        if (games.replace(game.gameID(), game) == null) {
+        if (games.replace(game.gameID(), game.copy()) == null) {
             throw new DataAccessException("Game does not exist");
         }
     }

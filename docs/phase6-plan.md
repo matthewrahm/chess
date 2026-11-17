@@ -1,8 +1,8 @@
 # Phase 6: live gameplay plan
 
 Planning baseline: November 17, 2026, `main` at `4396ff4`. This is a proposed
-implementation plan; live gameplay is not implemented yet. Milestone 1 is now
-implemented: shared protocol classes and serialization tests.
+implementation plan; live gameplay is not implemented yet. Milestones 1–2 are
+implemented: shared protocol, durable game-over state, and detached snapshots.
 
 ## Sources and starting point
 
@@ -13,12 +13,12 @@ implemented: shared protocol classes and serialization tests.
 - Starter revision: `d3ffc6639e2d78d0e88b3fe899936b995d8614e1`. All four local
   Phase 6 starter Java files match that revision byte-for-byte.
 
-Existing HTTP authentication, game creation/listing/joining, SQL persistence,
+At the planning baseline, existing HTTP authentication, game creation/listing/joining, SQL persistence,
 chess rules, and board rendering provide the foundation. `Server` has no `/ws`
 route. `ConsoleClient` currently draws the initial board and tracks only its
 perspective, not an active game ID or live state. `GameData` contains a
-`ChessGame`; `GameJson` already persists that game's complete JSON. There is no
-durable resignation marker. Tyrus dependencies already exist in both modules.
+`ChessGame`; `GameJson` already persists that game's complete JSON. There was no
+durable resignation marker before milestone 2. Tyrus dependencies already exist in both modules.
 
 Phase 5's November 11 verification recorded 710 passing tests. That is historical
 evidence, not a Phase 6 result. Remote grading and TA acceptance remain separate.
@@ -36,10 +36,14 @@ game rules into `ConsoleClient` or `Server`.
 - **Server:** register `/ws` with Javalin. A handler parses and validates messages;
   a gameplay service authorizes actions and updates storage; a connection registry
   tracks game subscriptions and delivers messages to the intended clients.
-- **Persistence:** add a backward-compatible game-over flag to `ChessGame`, stored
-  in the existing JSON, with old records defaulting to false. Keep existing public
-  signatures. Confirm copies, equality, and JSON round trips preserve the flag.
-  Checkmate/stalemate detection and resignation all prevent subsequent moves.
+- **Persistence (implemented foundation):** `ChessGame.endGame()` records a
+  `gameOver` flag in the existing JSON; `isGameOver()` reads it and `makeMove()`
+  rejects further moves once set. Old JSON defaults to false. `ChessGame.copy()`
+  and `GameData.copy()` preserve board, turn, special-move history, and end state.
+  Memory storage now copies on reads/writes, matching SQL isolation, and
+  `LoadGameMessage` captures a detached snapshot. Future gameplay handlers must
+  invoke `endGame()` for resignation/checkmate/stalemate before persisting; those
+  handlers and automatic terminal-state transitions are not implemented yet.
 - **Atomicity:** initially use the same store monitor as HTTP `joinGame` for
   read/check/update operations. Work on a detached game copy so failed writes
   cannot mutate memory storage. Prepare immutable event snapshots only after
@@ -69,7 +73,7 @@ Observers may connect, highlight locally, and leave; they cannot move or resign.
 | `LEAVE` | Clear the player's seat if applicable, persist, unsubscribe, and notify others. Observers unsubscribe without changing seats. |
 | `RESIGN` | Persist game over and notify everyone; retain seats and subscriptions. Reject observers and already-finished games. |
 
-`LOAD_GAME` contains `game` (proposed type: `ChessGame`), `ERROR` contains
+`LOAD_GAME` contains `game` (implemented type: `ChessGame`), `ERROR` contains
 `errorMessage` beginning with `Error:`, and `NOTIFICATION` contains `message`.
 Only the appropriate payload field is present. Invalid actions send an error to
 the requester only, with no mutation or broadcasts. Preserve the expected message
@@ -118,7 +122,7 @@ Fourteen is the planned milestone count; necessary follow-up fixes may add commi
 | # | Deliverable and verification |
 | --- | --- |
 | 1 | **Complete Nov 17:** protocol classes, typed messages, and 12 serialization cases; all 183 shared tests pass. |
-| 2 | Add durable game-over state and detached copies; verify old JSON, memory isolation, and SQL persistence. |
+| 2 | **Complete Nov 17:** durable game-over state, detached copies, and 15 lifecycle/isolation tests; full suite 737 passing. |
 | 3 | Add `/ws`, parsing, authentication, and subscription registry; test malformed input and cleanup. |
 | 4 | Implement CONNECT; test current-state loading, observer access, recipients, and game isolation. |
 | 5 | Implement MAKE_MOVE; test legal moves, wrong turn/piece, observer denial, and failed persistence. |
@@ -158,5 +162,5 @@ The current course links named "checklist" and "common problems" point to
 anchors absent from the current tips file. Use the gameplay rubric and the
 available Phase 6 checklist, and recheck those links before pass-off.
 
-**Next concrete step:** milestone 2, durable game-over state and detached copies.
-A TA appointment has not been scheduled.
+**Next concrete step:** milestones 3–4 on the next workday: WebSocket endpoint,
+validated subscriptions, and CONNECT. A TA appointment has not been scheduled.

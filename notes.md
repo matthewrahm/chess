@@ -1773,3 +1773,36 @@ Deadline found in the official Fall 2026 schedule at course revision
 shows no cutoff time; the native browser connection was unavailable, so no LMS
 override was checked. Proposed two-commit workdays: Nov 17, 19, 21, 23, 28, 30,
 and Dec 1, with Dec 2–3 reserved for remaining verification and TA pass-off.
+
+
+## November 17 - Phase 6 milestone 2: durable game lifecycle and snapshots
+
+Added ChessGame.endGame()/isGameOver(), a persisted gameOver flag, and a move
+rejection guard. Equality and hash codes include end state; old saved JSON loads
+as an active game. Existing schema and public method signatures are preserved.
+ChessGame.copy() retains board, turn, castling rights, en-passant opportunity, and
+end state without sharing mutable state. GameData.copy() carries the same contract.
+MemoryDataAccess copies game values on both reads and writes, matching SQL's
+snapshot behavior. LoadGameMessage captures a snapshot and returns detached copies.
+
+Fifteen new tests cover lifecycle/legacy JSON, special-move copy independence,
+message snapshot isolation, memory create/read/list/update isolation, rejected
+writes, SQL persistence through fresh DAO/storage instances, legacy database
+rows, and failed SQL writes. Runtime resignation and checkmate/stalemate handlers
+will call endGame() in later milestones; this commit does not implement those
+handlers or activate the official WebSocket integration tests prematurely.
+
+Java 21 full isolated `verify_tests.py --phase 5` run: 737 tests, zero failures,
+errors, or skips; SQL 166/171 lines (97.08%), HTTP facade 90/90 (100%). This mode
+runs all currently active Maven tests and existing coverage gates, not a Phase 6
+remote grader. Disposable database/account cleanup succeeded. Official Checkstyle
+across all three modules: zero findings. The first Java 21 Checkstyle launch was
+incompatible with the supplied tool's newer bytecode; reran successfully using
+Java 26, while application compilation/tests remained on Java 21.
+Evidence: /tmp/chess-phase6/nov17-state/, nov17-state-summary.log, and
+nov17-quality.log. Reviewed changed source for copying boundaries, compatibility,
+and responsibility; git diff --check passes. Supplied base classes remain unchanged.
+
+Handoff: main, first commit b120b53; today's second commit completes milestone 2.
+Two of fourteen planned implementation commits are complete. Next session targets
+milestones 3–4 (/ws and CONNECT). No submission or TA acceptance is claimed.

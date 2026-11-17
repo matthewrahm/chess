@@ -22,14 +22,15 @@ public interface DataAccess {
 
     void clear() throws DataAccessException;
 
-    // Returns a separate collection, never null. Ordering is unspecified.
+    // Returns detached game snapshots in a separate collection, never null. Ordering is unspecified.
     Collection<GameData> listGames() throws DataAccessException;
 
-    // Stores the supplied board and turn with both player seats empty.
+    // Stores a snapshot of the supplied game with both player seats empty.
     int createGame(String gameName, ChessGame game) throws DataAccessException;
 
+    // Returns a detached snapshot, or null if the ID does not exist.
     GameData getGame(int gameID) throws DataAccessException;
 
-    // Replaces an existing game; an unknown ID is a storage error.
+    // Replaces an existing game with a snapshot; an unknown ID is a storage error.
     void updateGame(GameData game) throws DataAccessException;
 }

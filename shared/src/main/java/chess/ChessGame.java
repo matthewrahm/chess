@@ -17,11 +17,33 @@ public class ChessGame {
     private TeamColor teamTurn;
     private ChessPosition enPassantPawn;
     private boolean[][] castlingRights = {{true, true}, {true, true}};
+    private boolean gameOver;
 
     public ChessGame() {
         board = new ChessBoard();
         board.resetBoard();
         teamTurn = TeamColor.WHITE;
+    }
+
+    /** Copies the complete position and history without sharing mutable state. */
+    public ChessGame copy() {
+        var copy = new ChessGame();
+        copy.board = board.copy();
+        copy.teamTurn = teamTurn;
+        copy.enPassantPawn = enPassantPawn;
+        copy.castlingRights = new boolean[][]{castlingRights[0].clone(), castlingRights[1].clone()};
+        copy.gameOver = gameOver;
+        return copy;
+    }
+
+    /** Whether the game has explicitly been ended, including by resignation. */
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    /** Ends play without changing the board, turn, or legal-move analysis. */
+    public void endGame() {
+        gameOver = true;
     }
 
     /**
@@ -88,6 +110,9 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
+        if (gameOver) {
+            throw new InvalidMoveException("The game is over");
+        }
         if (move == null || !isOnBoard(move.getStartPosition()) || !isOnBoard(move.getEndPosition())) {
             throw new InvalidMoveException("Move must use positions on the board");
         }
@@ -262,13 +287,13 @@ public class ChessGame {
             return false;
         }
         ChessGame that = (ChessGame) o;
-        return teamTurn == that.teamTurn && Objects.equals(board, that.board)
+        return gameOver == that.gameOver && teamTurn == that.teamTurn && Objects.equals(board, that.board)
                 && Arrays.deepEquals(castlingRights, that.castlingRights)
                 && Objects.equals(enPassantPawn, that.enPassantPawn);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(board, teamTurn, Arrays.deepHashCode(castlingRights), enPassantPawn);
+        return Objects.hash(board, teamTurn, Arrays.deepHashCode(castlingRights), enPassantPawn, gameOver);
     }
 }
