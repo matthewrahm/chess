@@ -1723,3 +1723,53 @@ local evidence. Next concrete step is remote Phase 5 grading, then TA pass-off;
 no remote result or completed TA assessment is claimed. The broader Chess project
 still needs Phase 6 gameplay. Keep the existing Nov 12 pass-off target and Nov 13
 buffer as planning dates, not a newly verified course deadline.
+
+## November 17 - Phase 6 planning
+
+On `main` at `4396ff4`, inspected the existing HTTP server, game service/storage,
+game model/JSON, console/renderer, dependency declarations, and inactive Phase 6
+starter. Added `docs/phase6-plan.md` with proposed interfaces, fourteen meaningful
+implementation milestones, and separate test, quality, and TA completion gates.
+Production code and official tests are unchanged.
+
+Read course requirements/setup, quality rubric, and TA tips at course revision
+`3b24b24e02a70a4b9c3111e74a7dabaebe009d32`. All four Phase 6 starter Java files
+match current starter revision `d3ffc6639e2d78d0e88b3fe899936b995d8614e1`
+byte-for-byte. The linked older TA checklist/common-problems anchors are absent
+from the current tips document; the plan records that gap.
+
+Checks today: repository inspection and remote source comparison only; no new
+functional test run or readiness claim. Existing November 11 results remain
+historical. Next: shared protocol/serialization tests, then durable game-over
+state and detached-copy persistence tests. Final deadline, remote Phase 5 grade,
+and TA acceptance have not been verified. The Phase 6 plan is proposed and no
+Phase 6 implementation commits have been made yet.
+
+Commit cadence agreed November 17: target fourteen meaningful implementation
+commits, organized as two milestones on each of seven distinct workdays across
+roughly one to two weeks. See the phase plan for the mapping. Phase 6 specifies
+twelve commits across the assignment period; public grader documentation gives
+an original three-day baseline but allows phase-specific thresholds. The live
+Phase 6 day setting and final deadline remain unverified. Dates and automated
+future sessions have not been scheduled.
+
+
+## November 17 - Phase 6 milestone 1: shared WebSocket protocol
+
+Activated the two unmodified supplied WebSocket base classes and added
+MakeMoveCommand, LoadGameMessage (ChessGame payload), ErrorMessage, and
+NotificationMessage. Exact JSON names and message-specific payloads are checked
+by twelve new serialization cases, including all four promotion choices and a
+noninitial position. No socket endpoint or gameplay handler is implemented yet.
+
+Java 21 `mvn -B -pl shared test`: 183 tests pass, zero failures/errors/skips.
+Official Checkstyle on the new protocol sources/tests: zero findings. Evidence:
+/tmp/chess-phase6-protocol-tests.log and /tmp/chess-phase6/protocol-quality.log.
+Updated docs/phase6-plan.md to distinguish implemented protocol from planned
+runtime behavior. Next milestone: durable game-over state and isolated copies.
+
+Deadline found in the official Fall 2026 schedule at course revision
+3b24b24e02a70a4b9c3111e74a7dabaebe009d32: Friday, December 4, 2026. The schedule
+shows no cutoff time; the native browser connection was unavailable, so no LMS
+override was checked. Proposed two-commit workdays: Nov 17, 19, 21, 23, 28, 30,
+and Dec 1, with Dec 2–3 reserved for remaining verification and TA pass-off.
