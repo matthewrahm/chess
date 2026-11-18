@@ -1831,3 +1831,41 @@ network-test scope passes under Java 26; git diff --check passes. Logs:
 Handoff: main, third of fourteen implementation commits. User requested today's
 session on Nov 18 instead of the proposed Nov 19 date. Next: CONNECT, participant
 roles, current-board loading, game-scoped notifications, and subscription cleanup.
+
+
+## November 18 - Phase 6 milestone 4: player and observer connections
+
+Implemented CONNECT on /ws. Current auth storage supplies the username and saved
+seats determine white/black/observer roles. The requester receives LOAD_GAME with
+its detached saved ChessGame; other subscribers in that game receive one role
+notification. Observers need no HTTP join. Repeated CONNECT refreshes the board
+without duplicate subscriptions or announcements. Each socket is bound to one
+username/game until it leaves or disconnects; separate sockets for one player are
+supported. Transport loss removes subscriptions while preserving seats, so direct
+CONNECT can recover without another HTTP join. Future actions already require a
+matching subscription; MAKE_MOVE, LEAVE, and RESIGN are still unimplemented.
+
+Interfaces: shared/src/main/java/websocket contains the implemented wire types;
+server/src/main/java/server/websocket handles transport/subscriptions, and
+server/src/main/java/service/GameplayService.java authenticates each command.
+Bad commands return ERROR only to their sender; no game mutation or broadcast.
+No client integration or official WebSocket test activation is included yet.
+
+Verification: 40 targeted real-network tests pass (27 endpoint plus 13 CONNECT/
+subscription cases), zero failures/errors/skips. Full Java 21 isolated regression
+via scripts/verify_tests.py --phase 5: 777 tests pass with zero failures/errors/
+skips. SQL coverage 166/171 lines (97.08%); HTTP facade 90/90 (100%). The phase-5
+mode runs all currently active tests and existing coverage gates; it is not a
+Phase 6 grader result. Disposable SQL database/account cleanup succeeded.
+Official Checkstyle across shared/server/client passes using Java 26; git diff
+--check passes. Reviewed new source for message ordering, responsibility,
+identity binding, snapshot isolation, and subscription cleanup.
+Evidence: /tmp/chess-phase6/nov18-connect/, /tmp/chess-phase6-nov18-connect.log,
+and /tmp/chess-phase6-nov18-all-quality.log. Official tests remain unchanged.
+
+Handoff: main in the existing chess checkout. Today's endpoint commit is
+07a9c23; this second commit completes milestone 4. Four of fourteen planned
+implementation commits are complete across Nov 17–18. Next: milestones 5–6,
+validated moves with persistence and check/checkmate/stalemate notifications.
+The plan is updated in docs/phase6-plan.md. Phase 6 submission and TA pass-off
+remain future work; no readiness or remote grading claim is made.

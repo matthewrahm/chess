@@ -1,8 +1,9 @@
 # Phase 6: live gameplay plan
 
 Planning baseline: November 17, 2026, `main` at `4396ff4`. This is a proposed
-implementation plan; live gameplay is not implemented yet. Milestones 1–3 are
-implemented: protocol, durable snapshots, and the validated WebSocket endpoint.
+implementation plan; live gameplay is not implemented yet. Milestones 1–4 are
+implemented: protocol, durable snapshots, the validated WebSocket endpoint, and
+player/observer connections that load saved games.
 
 ## Sources and starting point
 
@@ -33,9 +34,15 @@ game rules into `ConsoleClient` or `Server`.
   error/notification classes are in `shared/src/main/java/websocket`. The supplied
   base classes are unchanged. `ProtocolSerializationTests` checks the wire fields,
   payload separation, promotion choices, and JSON round trips.
-- **Server:** register `/ws` with Javalin. A handler parses and validates messages;
-  a gameplay service authorizes actions and updates storage; a connection registry
-  tracks game subscriptions and delivers messages to the intended clients.
+- **Server (CONNECT implemented):** `/ws` is registered with Javalin.
+  `GameplayHandler` validates commands through `GameCommandReader`, and
+  `GameplayService` authenticates each command against current storage.
+  `GameConnections` binds each socket to one username/game and queues ordered
+  messages through `GameConnection`. CONNECT loads a detached saved game and
+  announces the stored player color or observer role to other game subscribers.
+  Repeated CONNECT refreshes state without another announcement. Disconnect
+  removes subscriptions while retaining seats; reconnect does not require HTTP
+  rejoin. Other gameplay commands remain unimplemented.
 - **Persistence (implemented foundation):** `ChessGame.endGame()` records a
   `gameOver` flag in the existing JSON; `isGameOver()` reads it and `makeMove()`
   rejects further moves once set. Old JSON defaults to false. `ChessGame.copy()`
@@ -59,7 +66,7 @@ game rules into `ConsoleClient` or `Server`.
   existing 1-based `ChessPosition` rows/columns. Promotion accepts queen, rook,
   bishop, or knight. Reuse `DisplayText` when rendering remote text.
 
-### Proposed wire contract
+### Wire contract (CONNECT implemented; other actions planned)
 
 Every command carries `commandType`, `authToken`, and integer `gameID`.
 `MAKE_MOVE` also carries `ChessMove move`. Authenticate each command against
@@ -124,7 +131,7 @@ Fourteen is the planned milestone count; necessary follow-up fixes may add commi
 | 1 | **Complete Nov 17:** protocol classes, typed messages, and 12 serialization cases; all 183 shared tests pass. |
 | 2 | **Complete Nov 17:** durable game-over state, detached copies, and 15 lifecycle/isolation tests; full suite 737 passing. |
 | 3 | **Complete Nov 18:** `/ws`, strict parsing, current-token authorization, connection tracking, ordered asynchronous replies, and 27 network tests. |
-| 4 | Implement CONNECT; test current-state loading, observer access, recipients, and game isolation. |
+| 4 | **Complete Nov 18:** CONNECT, saved-state loading, player/observer roles, game isolation, identity binding, and reconnects; 13 additional network tests. |
 | 5 | Implement MAKE_MOVE; test legal moves, wrong turn/piece, observer denial, and failed persistence. |
 | 6 | Implement terminal-state and check notifications; test checkmate/stalemate and rejected later moves. |
 | 7 | Implement LEAVE; test seat release, observer departure, and replacement players. |
@@ -162,4 +169,4 @@ The current course links named "checklist" and "common problems" point to
 anchors absent from the current tips file. Use the gameplay rubric and the
 available Phase 6 checklist, and recheck those links before pass-off.
 
-**Next concrete step:** milestone 4: validated game subscriptions and CONNECT. A TA appointment has not been scheduled.
+**Next concrete step:** milestones 5–6: validated moves, persistence, and check/terminal-state notifications. A TA appointment has not been scheduled.

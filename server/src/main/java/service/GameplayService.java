@@ -33,5 +33,15 @@ public class GameplayService {
         }
     }
 
-    public record GameAccess(String username, GameData game) { }
+    public record GameAccess(String username, GameData game) {
+        public String connectionNotice() {
+            if (username.equals(game.whiteUsername())) {
+                return username + " connected as white.";
+            }
+            if (username.equals(game.blackUsername())) {
+                return username + " connected as black.";
+            }
+            return username + " connected as an observer.";
+        }
+    }
 }

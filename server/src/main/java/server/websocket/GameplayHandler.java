@@ -5,7 +5,10 @@ import io.javalin.websocket.WsContext;
 import io.javalin.websocket.WsMessageContext;
 import service.GameplayException;
 import service.GameplayService;
+import websocket.commands.UserGameCommand;
 import websocket.messages.ErrorMessage;
+import websocket.messages.LoadGameMessage;
+import websocket.messages.NotificationMessage;
 
 /** Translates WebSocket events into validated gameplay requests. */
 public final class GameplayHandler {
@@ -24,12 +27,27 @@ public final class GameplayHandler {
     public synchronized void message(WsMessageContext context) {
         try {
             var command = reader.read(context.message());
-            service.authorize(command);
-            connections.send(context.sessionId(), new ErrorMessage("This gameplay action is not implemented yet"));
+            var access = service.authorize(command);
+            if (command.getCommandType() == UserGameCommand.CommandType.CONNECT) {
+                connect(context.sessionId(), access);
+            } else {
+                connections.requireSubscription(context.sessionId(), access.username(), command.getGameID());
+                connections.send(context.sessionId(), new ErrorMessage("This gameplay action is not implemented yet"));
+            }
         } catch (GameplayException exception) {
             connections.send(context.sessionId(), new ErrorMessage(exception.getMessage()));
         } catch (DataAccessException | RuntimeException exception) {
             connections.send(context.sessionId(), new ErrorMessage("Unable to process game command"));
+        }
+    }
+
+    private void connect(String id, GameplayService.GameAccess access) throws GameplayException {
+        var loaded = new LoadGameMessage(access.game().game());
+        int gameID = access.game().gameID();
+        boolean newSubscription = connections.subscribe(id, access.username(), gameID);
+        connections.send(id, loaded);
+        if (newSubscription) {
+            connections.broadcast(gameID, id, new NotificationMessage(access.connectionNotice()));
         }
     }
 
