@@ -1806,3 +1806,28 @@ and responsibility; git diff --check passes. Supplied base classes remain unchan
 Handoff: main, first commit b120b53; today's second commit completes milestone 2.
 Two of fourteen planned implementation commits are complete. Next session targets
 milestones 3–4 (/ws and CONNECT). No submission or TA acceptance is claimed.
+
+
+## November 18 - Phase 6 milestone 3: WebSocket endpoint and validation
+
+Registered /ws in the existing Javalin server. GameplayHandler owns transport
+events, GameCommandReader validates strict JSON and field types, GameplayService
+authorizes the current token and loads a detached game snapshot, and GameConnections
+tracks open sockets per server. GameConnection queues asynchronous Jetty writes
+in order without blocking storage locks. Close/error events remove connections;
+errors return only to the requesting socket, without raw payloads or storage details.
+
+Milestone boundary: valid commands still return an explicit not-implemented error;
+CONNECT subscriptions and success messages are milestone 4. Existing HTTP behavior
+is preserved. No official tests were changed or activated in this commit.
+
+Java 21 targeted Maven reactor run: 27 real-network GameplayEndpointTests pass,
+zero failures/errors/skips. Tests cover malformed/invalid JSON, strict field types,
+authentication on each command, nonexistent games, binary frames, queued reply
+order, and closed-peer isolation. Official Checkstyle on changed production and
+network-test scope passes under Java 26; git diff --check passes. Logs:
+/tmp/chess-phase6-nov18-endpoint.log and chess-phase6-nov18-endpoint-quality.log.
+
+Handoff: main, third of fourteen implementation commits. User requested today's
+session on Nov 18 instead of the proposed Nov 19 date. Next: CONNECT, participant
+roles, current-board loading, game-scoped notifications, and subscription cleanup.

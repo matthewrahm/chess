@@ -1,8 +1,8 @@
 # Phase 6: live gameplay plan
 
 Planning baseline: November 17, 2026, `main` at `4396ff4`. This is a proposed
-implementation plan; live gameplay is not implemented yet. Milestones 1–2 are
-implemented: shared protocol, durable game-over state, and detached snapshots.
+implementation plan; live gameplay is not implemented yet. Milestones 1–3 are
+implemented: protocol, durable snapshots, and the validated WebSocket endpoint.
 
 ## Sources and starting point
 
@@ -14,7 +14,7 @@ implemented: shared protocol, durable game-over state, and detached snapshots.
   Phase 6 starter Java files match that revision byte-for-byte.
 
 At the planning baseline, existing HTTP authentication, game creation/listing/joining, SQL persistence,
-chess rules, and board rendering provide the foundation. `Server` has no `/ws`
+chess rules, and board rendering provide the foundation. At that baseline, `Server` had no `/ws`
 route. `ConsoleClient` currently draws the initial board and tracks only its
 perspective, not an active game ID or live state. `GameData` contains a
 `ChessGame`; `GameJson` already persists that game's complete JSON. There was no
@@ -109,7 +109,7 @@ dates are work targets, not automatically scheduled sessions.
 | Workday / target date | Planned commits |
 | --- | --- |
 | 1 / Nov 17 | 1–2: protocol and durable game state |
-| 2 / Nov 19 | 3–4: WebSocket endpoint and connecting |
+| 2 / Nov 18 | 3–4: WebSocket endpoint and connecting |
 | 3 / Nov 21 | 5–6: moves and terminal-state notifications |
 | 4 / Nov 23 | 7–8: leaving and resignation |
 | 5 / Nov 28 | 9–10: official integration tests and client transport |
@@ -123,7 +123,7 @@ Fourteen is the planned milestone count; necessary follow-up fixes may add commi
 | --- | --- |
 | 1 | **Complete Nov 17:** protocol classes, typed messages, and 12 serialization cases; all 183 shared tests pass. |
 | 2 | **Complete Nov 17:** durable game-over state, detached copies, and 15 lifecycle/isolation tests; full suite 737 passing. |
-| 3 | Add `/ws`, parsing, authentication, and subscription registry; test malformed input and cleanup. |
+| 3 | **Complete Nov 18:** `/ws`, strict parsing, current-token authorization, connection tracking, ordered asynchronous replies, and 27 network tests. |
 | 4 | Implement CONNECT; test current-state loading, observer access, recipients, and game isolation. |
 | 5 | Implement MAKE_MOVE; test legal moves, wrong turn/piece, observer denial, and failed persistence. |
 | 6 | Implement terminal-state and check notifications; test checkmate/stalemate and rejected later moves. |
@@ -162,5 +162,4 @@ The current course links named "checklist" and "common problems" point to
 anchors absent from the current tips file. Use the gameplay rubric and the
 available Phase 6 checklist, and recheck those links before pass-off.
 
-**Next concrete step:** milestones 3–4 on the next workday: WebSocket endpoint,
-validated subscriptions, and CONNECT. A TA appointment has not been scheduled.
+**Next concrete step:** milestone 4: validated game subscriptions and CONNECT. A TA appointment has not been scheduled.

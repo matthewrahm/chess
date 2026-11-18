@@ -11,6 +11,8 @@ import io.javalin.Javalin;
 import service.ServiceException;
 import service.ClearService;
 import service.GameService;
+import service.GameplayService;
+import server.websocket.GameplayHandler;
 import service.UserService;
 
 public class Server {
@@ -42,6 +44,18 @@ public class Server {
         javalin.get("/game", games::list);
         javalin.post("/game", games::create);
         javalin.put("/game", games::join);
+
+        var gameplay = new GameplayHandler(new GameplayService(dataAccess));
+        javalin.ws("/ws", socket -> {
+            socket.onConnect(gameplay::open);
+            socket.onMessage(gameplay::message);
+            socket.onBinaryMessage(gameplay::binary);
+            socket.onClose(gameplay::close);
+            socket.onError(context -> {
+                gameplay.close(context);
+                context.closeSession();
+            });
+        });
 
         javalin.exception(ServiceException.class, (error, context) -> {
             int status = switch (error.getCode()) {
