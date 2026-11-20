@@ -52,6 +52,9 @@ public final class GameplayHandler {
         int gameID = result.game().gameID();
         connections.broadcast(gameID, null, new LoadGameMessage(result.game().game()));
         connections.broadcast(gameID, id, new NotificationMessage(result.moveNotice()));
+        if (result.statusNotice() != null) {
+            connections.broadcast(gameID, null, new NotificationMessage(result.statusNotice()));
+        }
     }
 
     private void connect(String id, GameplayService.GameAccess access) throws GameplayException {

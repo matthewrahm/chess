@@ -3,9 +3,7 @@ package server.websocket;
 import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPosition;
-import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
-import model.GameData;
 import org.junit.jupiter.api.Test;
 import websocket.commands.MakeMoveCommand;
 
@@ -140,15 +138,4 @@ class GameplayMoveTests extends GameSocketFixture {
                 new ChessMove(new ChessPosition(row, col), new ChessPosition(endRow, endCol), null));
     }
 
-    private static class FailingStore extends MemoryDataAccess {
-        private volatile boolean fail;
-
-        @Override
-        public synchronized void updateGame(GameData game) throws DataAccessException {
-            if (fail) {
-                throw new DataAccessException("private storage diagnostics");
-            }
-            super.updateGame(game);
-        }
-    }
 }

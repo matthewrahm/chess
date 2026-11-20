@@ -39,8 +39,9 @@ public class GameplayService {
             } catch (InvalidMoveException exception) {
                 throw new GameplayException(exception.getMessage());
             }
+            String statusNotice = updateStatus(access.game());
             dataAccess.updateGame(access.game());
-            return new MoveResult(access.game(), moveNotice(access.username(), piece, move));
+            return new MoveResult(access.game(), moveNotice(access.username(), piece, move), statusNotice);
         }
     }
 
@@ -78,7 +79,26 @@ public class GameplayService {
         return "" + (char) ('a' + position.getColumn() - 1) + position.getRow();
     }
 
-    public record MoveResult(GameData game, String moveNotice) { }
+    private String updateStatus(GameData data) {
+        var game = data.game();
+        var next = game.getTeamTurn();
+        String username = next == ChessGame.TeamColor.WHITE ? data.whiteUsername() : data.blackUsername();
+        String player = next.name().toLowerCase(Locale.ROOT);
+        if (username != null) {
+            player = username + " (" + player + ")";
+        }
+        if (game.isInCheckmate(next)) {
+            game.endGame();
+            return player + " is in checkmate. Game over.";
+        }
+        if (game.isInStalemate(next)) {
+            game.endGame();
+            return player + " is in stalemate. Game over: draw.";
+        }
+        return game.isInCheck(next) ? player + " is in check." : null;
+    }
+
+    public record MoveResult(GameData game, String moveNotice, String statusNotice) { }
 
     public GameAccess authorize(UserGameCommand command) throws GameplayException, DataAccessException {
         synchronized (dataAccess) {

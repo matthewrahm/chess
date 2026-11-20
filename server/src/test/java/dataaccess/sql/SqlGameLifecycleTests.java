@@ -1,6 +1,8 @@
 package dataaccess.sql;
 
 import chess.ChessGame;
+import chess.ChessBoard;
+import chess.ChessPiece;
 import chess.ChessMove;
 import chess.ChessPosition;
 import chess.InvalidMoveException;
@@ -15,6 +17,8 @@ import websocket.commands.MakeMoveCommand;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -114,5 +118,43 @@ class SqlGameLifecycleTests {
 
     private MakeMoveCommand command(int id, String token, int fromRow, int toRow) {
         return new MakeMoveCommand(token, id, new ChessMove(new ChessPosition(fromRow, 5), new ChessPosition(toRow, 5), null));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void terminalMovePersistsCompletionAndRejectsMovesAfterReload(boolean mate) throws Exception {
+        var data = new SqlDataAccess();
+        data.createAuth(new AuthData("white-token", "Alice"));
+        data.createAuth(new AuthData("black-token", "Bob"));
+        var game = new ChessGame();
+        ChessMove finalMove;
+        String token;
+        String username;
+        if (mate) {
+            game.makeMove(new ChessMove(new ChessPosition(2, 6), new ChessPosition(3, 6), null));
+            game.makeMove(new ChessMove(new ChessPosition(7, 5), new ChessPosition(5, 5), null));
+            game.makeMove(new ChessMove(new ChessPosition(2, 7), new ChessPosition(4, 7), null));
+            finalMove = new ChessMove(new ChessPosition(8, 4), new ChessPosition(4, 8), null);
+            token = "black-token";
+            username = "Bob";
+        } else {
+            var board = new ChessBoard();
+            board.addPiece(new ChessPosition(6, 3), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KING));
+            board.addPiece(new ChessPosition(6, 2), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.QUEEN));
+            board.addPiece(new ChessPosition(8, 1), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KING));
+            game.setBoard(board);
+            finalMove = new ChessMove(new ChessPosition(6, 2), new ChessPosition(7, 3), null);
+            token = "white-token";
+            username = "Alice";
+        }
+        data.updateGame(new GameData(id, "Alice", "Bob", "Practice", game));
+        var command = new MakeMoveCommand(token, id, finalMove);
+        var result = new GameplayService(data).makeMove(command, username);
+        var restarted = new SqlDataAccess();
+        assertEquals(result.game(), restarted.getGame(id));
+        assertTrue(restarted.getGame(id).game().isGameOver());
+        assertTrue(result.statusNotice().contains(mate ? "checkmate" : "stalemate"));
+        assertThrows(GameplayException.class, () -> new GameplayService(restarted).makeMove(command, username));
+        assertEquals(result.game(), restarted.getGame(id));
     }
 }

@@ -1894,3 +1894,42 @@ Handoff: main; milestone 5 of 14. Today's requested session moves planned workda
 3 from Nov 21 to Nov 19. Next: classify check/checkmate/stalemate before saving,
 persist terminal state, broadcast status to everyone, and test rejection after
 completion. LEAVE/RESIGN and client gameplay remain future milestones.
+
+
+## November 19 - Phase 6 milestone 6: check and durable game completion
+
+MAKE_MOVE now evaluates the next player's position after applying a legal move.
+Check produces one status notification to everyone in the game. Checkmate or
+stalemate first marks the detached game ended, then persists it with its seats
+intact. Only a successful save emits LOAD_GAME to all, the move notice to others,
+and the status notice to all, in that order. Checkmate produces no duplicate
+check notice. Later moves are rejected using the saved end flag, including after
+reconnect or a fresh SQL storage/service instance. No wire fields changed;
+GameplayService.MoveResult now includes a nullable statusNotice for the handler.
+
+Eight new network cases cover Fool's Mate, stalemate, exact message recipients
+and order, cross-game silence, reconnect, escaping check, all four promotions,
+and failed terminal-save isolation/retry. Two additional SQL cases verify durable
+checkmate/stalemate and rejection after reload. Shared failing-store test support
+now lives in GameSocketFixture. Official tests and starter files are unchanged.
+
+Verification on Java 21: all 73 focused cases pass. Full isolated regression via
+scripts/verify_tests.py --phase 5 passes 813 tests, zero failures/errors/skips.
+SQL coverage remains 166/171 lines (97.08%); HTTP facade 90/90 (100%). The earlier
+move-only snapshot also passed 803 tests. Disposable database/account cleanup
+succeeded for both runs. Official Checkstyle across all three modules under
+Java 26 reports zero findings; git diff --check passes. Reviewed the changed
+production code for authorization, detached-state handling, persistence ordering,
+terminal transitions, and separation of service/transport responsibilities.
+Evidence: /tmp/chess-phase6/nov19-status/, /tmp/chess-phase6-nov19-status.log,
+/tmp/chess-phase6-nov19-status-full.log, and status-quality.log with the same prefix.
+The phase-5 verification mode runs all active tests plus the existing coverage
+gates; it is not a Phase 6 remote grader result. Official WebSocket tests stay
+scheduled for milestone 9 after LEAVE and RESIGN are implemented.
+
+Handoff: main in the existing checkout; first commit today is 5c4353d, pushed to
+origin/main. This second commit completes milestone 6: six of fourteen planned
+implementation commits across Nov 17–19. Next session: milestones 7–8, LEAVE
+(seat release/unsubscribe) and RESIGN (player-only durable completion with retained
+seats/subscriptions). The existing client still needs Phase 6 integration.
+No submission, remote grade, or TA acceptance is claimed.

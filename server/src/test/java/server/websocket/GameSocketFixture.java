@@ -3,6 +3,8 @@ package server.websocket;
 import chess.ChessGame;
 import com.google.gson.Gson;
 import dataaccess.MemoryDataAccess;
+import dataaccess.DataAccessException;
+import model.GameData;
 import model.AuthData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,5 +71,17 @@ abstract class GameSocketFixture {
         var response = client.next("NOTIFICATION");
         assertEquals(Set.of("serverMessageType", "message"), response.keySet());
         return response.get("message").getAsString();
+    }
+
+    protected static class FailingStore extends MemoryDataAccess {
+        volatile boolean fail;
+
+        @Override
+        public synchronized void updateGame(GameData game) throws DataAccessException {
+            if (fail) {
+                throw new DataAccessException("private storage diagnostics");
+            }
+            super.updateGame(game);
+        }
     }
 }
