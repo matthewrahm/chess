@@ -59,6 +59,23 @@ public class GameplayService {
         }
     }
 
+    public GameAccess resign(UserGameCommand command, String subscribedUsername)
+            throws GameplayException, DataAccessException {
+        synchronized (dataAccess) {
+            var access = authorizeSubscription(command, subscribedUsername);
+            var game = access.game();
+            if (!access.username().equals(game.whiteUsername()) && !access.username().equals(game.blackUsername())) {
+                throw new GameplayException("Only players may resign");
+            }
+            if (game.game().isGameOver()) {
+                throw new GameplayException("The game is over");
+            }
+            game.game().endGame();
+            dataAccess.updateGame(game);
+            return access;
+        }
+    }
+
     private GameAccess authorizeSubscription(UserGameCommand command, String username)
             throws GameplayException, DataAccessException {
         var access = authorize(command);

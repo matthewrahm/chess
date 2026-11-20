@@ -37,8 +37,10 @@ public final class GameplayHandler {
                     makeMove(context.sessionId(), access.username(), move);
                 } else if (command.getCommandType() == UserGameCommand.CommandType.LEAVE) {
                     leave(context.sessionId(), access.username(), command);
+                } else if (command.getCommandType() == UserGameCommand.CommandType.RESIGN) {
+                    resign(access.username(), command);
                 } else {
-                    connections.send(context.sessionId(), new ErrorMessage("This gameplay action is not implemented yet"));
+                    throw new GameplayException("Unknown gameplay action");
                 }
             }
         } catch (GameplayException exception) {
@@ -46,6 +48,12 @@ public final class GameplayHandler {
         } catch (DataAccessException | RuntimeException exception) {
             connections.send(context.sessionId(), new ErrorMessage("Unable to process game command"));
         }
+    }
+
+    private void resign(String username, UserGameCommand command) throws GameplayException, DataAccessException {
+        var result = service.resign(command, username);
+        connections.broadcast(result.game().gameID(), null,
+                new NotificationMessage(result.username() + " resigned. Game over."));
     }
 
     private void leave(String id, String username, UserGameCommand command)
