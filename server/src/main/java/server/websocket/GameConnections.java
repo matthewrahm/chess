@@ -24,6 +24,10 @@ final class GameConnections {
         subscriptions.remove(id);
     }
 
+    synchronized void unsubscribe(String id) {
+        subscriptions.remove(id);
+    }
+
     synchronized boolean subscribe(String id, String username, int gameID) throws GameplayException {
         var connection = connections.get(id);
         if (connection == null || !connection.isOpen()) {

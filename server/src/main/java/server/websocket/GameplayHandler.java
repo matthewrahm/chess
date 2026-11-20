@@ -35,6 +35,8 @@ public final class GameplayHandler {
                 connections.requireSubscription(context.sessionId(), access.username(), command.getGameID());
                 if (command instanceof MakeMoveCommand move) {
                     makeMove(context.sessionId(), access.username(), move);
+                } else if (command.getCommandType() == UserGameCommand.CommandType.LEAVE) {
+                    leave(context.sessionId(), access.username(), command);
                 } else {
                     connections.send(context.sessionId(), new ErrorMessage("This gameplay action is not implemented yet"));
                 }
@@ -44,6 +46,14 @@ public final class GameplayHandler {
         } catch (DataAccessException | RuntimeException exception) {
             connections.send(context.sessionId(), new ErrorMessage("Unable to process game command"));
         }
+    }
+
+    private void leave(String id, String username, UserGameCommand command)
+            throws GameplayException, DataAccessException {
+        var result = service.leave(command, username);
+        connections.unsubscribe(id);
+        connections.broadcast(result.game().gameID(), id,
+                new NotificationMessage(result.username() + " left the game."));
     }
 
     private void makeMove(String id, String username, MakeMoveCommand command)

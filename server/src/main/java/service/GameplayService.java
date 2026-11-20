@@ -24,10 +24,7 @@ public class GameplayService {
     public MoveResult makeMove(MakeMoveCommand command, String subscribedUsername)
             throws GameplayException, DataAccessException {
         synchronized (dataAccess) {
-            var access = authorize(command);
-            if (!access.username().equals(subscribedUsername)) {
-                throw new GameplayException("Connect as this user first");
-            }
+            var access = authorizeSubscription(command, subscribedUsername);
             var game = access.game().game();
             if (game.isGameOver()) {
                 throw new GameplayException("The game is over");
@@ -43,6 +40,32 @@ public class GameplayService {
             dataAccess.updateGame(access.game());
             return new MoveResult(access.game(), moveNotice(access.username(), piece, move), statusNotice);
         }
+    }
+
+    public GameAccess leave(UserGameCommand command, String subscribedUsername)
+            throws GameplayException, DataAccessException {
+        synchronized (dataAccess) {
+            var access = authorizeSubscription(command, subscribedUsername);
+            var game = access.game();
+            boolean white = access.username().equals(game.whiteUsername());
+            boolean black = access.username().equals(game.blackUsername());
+            if (!white && !black) {
+                return access;
+            }
+            var updated = new GameData(game.gameID(), white ? null : game.whiteUsername(),
+                    black ? null : game.blackUsername(), game.gameName(), game.game());
+            dataAccess.updateGame(updated);
+            return new GameAccess(access.username(), updated);
+        }
+    }
+
+    private GameAccess authorizeSubscription(UserGameCommand command, String username)
+            throws GameplayException, DataAccessException {
+        var access = authorize(command);
+        if (!access.username().equals(username)) {
+            throw new GameplayException("Connect as this user first");
+        }
+        return access;
     }
 
     private ChessPiece requireOwnedPiece(GameAccess access, ChessMove move) throws GameplayException {

@@ -1,9 +1,9 @@
 # Phase 6: live gameplay plan
 
 Planning baseline: November 17, 2026, `main` at `4396ff4`.
-Milestones 1–6 are implemented: protocol, durable snapshots, the validated
+Milestones 1–7 are implemented: protocol, durable snapshots, the validated
 WebSocket endpoint, player/observer connections, validated saved moves, and
-check/checkmate/stalemate notifications with durable game completion.
+check/checkmate/stalemate notifications with durable game completion, and leaving.
 The remaining milestones are planned.
 
 ## Sources and starting point
@@ -35,7 +35,7 @@ game rules into `ConsoleClient` or `Server`.
   error/notification classes are in `shared/src/main/java/websocket`. The supplied
   base classes are unchanged. `ProtocolSerializationTests` checks the wire fields,
   payload separation, promotion choices, and JSON round trips.
-- **Server (CONNECT and MAKE_MOVE implemented):** `/ws` is registered with Javalin.
+- **Server (CONNECT, MAKE_MOVE, and LEAVE implemented):** `/ws` is registered with Javalin.
   `GameplayHandler` validates commands through `GameCommandReader`, and
   `GameplayService` authenticates each command against current storage.
   `GameConnections` binds each socket to one username/game and queues ordered
@@ -47,7 +47,9 @@ game rules into `ConsoleClient` or `Server`.
   and saved end state under the HTTP join storage lock. A successful save sends
   LOAD_GAME to all game subscribers and a named move notice to everyone except
   the requester. Check/checkmate/stalemate then produces one status notice to
-  everyone in the game, including the mover. LEAVE and RESIGN remain planned.
+  everyone in the game, including the mover. LEAVE clears the stored player seat, unsubscribes the departing socket, and
+  notifies only remaining subscribers. Observer departure does not write storage.
+  Failed persistence retains the seat and subscription for retry. RESIGN remains planned.
 - **Persistence (implemented foundation):** `ChessGame.endGame()` records a
   `gameOver` flag in the existing JSON; `isGameOver()` reads it and `makeMove()`
   rejects further moves once set. Old JSON defaults to false. `ChessGame.copy()`
@@ -72,7 +74,7 @@ game rules into `ConsoleClient` or `Server`.
   existing 1-based `ChessPosition` rows/columns. Promotion accepts queen, rook,
   bishop, or knight. Reuse `DisplayText` when rendering remote text.
 
-### Wire contract (CONNECT and MAKE_MOVE implemented; LEAVE and RESIGN planned)
+### Wire contract (CONNECT, MAKE_MOVE, and LEAVE implemented; RESIGN planned)
 
 Every command carries `commandType`, `authToken`, and integer `gameID`.
 `MAKE_MOVE` also carries `ChessMove move`. Authenticate each command against
@@ -124,7 +126,7 @@ dates are work targets, not automatically scheduled sessions.
 | 1 / Nov 17 | 1–2: protocol and durable game state |
 | 2 / Nov 18 | 3–4: WebSocket endpoint and connecting |
 | 3 / Nov 19 | 5–6: moves and terminal-state notifications |
-| 4 / Nov 23 | 7–8: leaving and resignation |
+| 4 / Nov 20 | 7–8: leaving and resignation |
 | 5 / Nov 28 | 9–10: official integration tests and client transport |
 | 6 / Nov 30 | 11–12: live board and move/promotion input |
 | 7 / Dec 1 | 13–14: gameplay commands and final verification |
@@ -140,7 +142,7 @@ Fourteen is the planned milestone count; necessary follow-up fixes may add commi
 | 4 | **Complete Nov 18:** CONNECT, saved-state loading, player/observer roles, game isolation, identity binding, and reconnects; 13 additional network tests. |
 | 5 | **Complete Nov 19:** MAKE_MOVE, strict move parsing, ownership/turn/legal-move validation, persistence, scoped ordered broadcasts, failed-save recovery, and competing-move protection. |
 | 6 | **Complete Nov 19:** check/checkmate/stalemate notifications, durable completion, reconnect/reload rejection, all four promotions, and failed terminal-save isolation. |
-| 7 | Implement LEAVE; test seat release, observer departure, and replacement players. |
+| 7 | **Complete Nov 20:** LEAVE, player seat release, observer unsubscribe, replacement players, failed-save retry, authorization, ended-game preservation, and SQL/server restart persistence. |
 | 8 | Implement RESIGN; test player-only authorization, retained subscriptions, restart durability, and repeated resignation. |
 | 9 | Activate unchanged official WebSocket tests/helpers; run the server suite in a disposable database and fix integration defects. |
 | 10 | Add client communicator/session; test lifecycle, typed callbacks, close/error handling, and stale events. |
@@ -175,4 +177,19 @@ The current course links named "checklist" and "common problems" point to
 anchors absent from the current tips file. Use the gameplay rubric and the
 available Phase 6 checklist, and recheck those links before pass-off.
 
-**Next concrete step:** milestones 7–8: LEAVE and RESIGN, with seat/subscription behavior and durable resignation tests. A TA appointment has not been scheduled.
+**Next concrete step:** milestone 8: RESIGN, with retained seats/subscriptions and durable resignation tests. A TA appointment has not been scheduled.
+
+## November 20 verification
+
+Rechecked the current course schedule and gameplay specification at revision
+`529548a855e8ed3f34debbe877c35f662c366ff3`: Phase 6 is still due December 4,
+with no cutoff time stated. All four official Phase 6 starter Java files match
+current starter revision `d3ffc6639e2d78d0e88b3fe899936b995d8614e1`.
+
+Milestone 7 adds six real-WebSocket leave cases and one SQL/server restart case.
+Course Checkstyle passes across all three modules
+(`/tmp/chess-phase6-nov20-leave-quality.log`).
+The disposable-database full build passes all 820 tests with no failures or skips;
+SQL coverage is 166/171 lines (97.08%), and ServerFacade coverage is 90/90 (100%).
+Reports: `/tmp/chess-phase6/nov20-leave`. Official Phase 6 pass-offs remain staged
+for milestone 9; these results do not establish full Phase 6 readiness.
