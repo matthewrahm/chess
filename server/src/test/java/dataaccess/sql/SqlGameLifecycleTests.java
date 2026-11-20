@@ -8,6 +8,10 @@ import com.google.gson.Gson;
 import dataaccess.DataAccessException;
 import dataaccess.DatabaseManager;
 import model.GameData;
+import model.AuthData;
+import service.GameplayException;
+import service.GameplayService;
+import websocket.commands.MakeMoveCommand;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -83,5 +87,32 @@ class SqlGameLifecycleTests {
 
     private ChessMove move() {
         return new ChessMove(new ChessPosition(2, 5), new ChessPosition(4, 5), null);
+    }
+
+    @Test
+    void acceptedMoveAndTurnSurviveNewStorageAndServiceInstances() throws Exception {
+        var data = new SqlDataAccess();
+        data.createAuth(new AuthData("white-token", "Alice"));
+        data.createAuth(new AuthData("black-token", "Bob"));
+        int id = data.createGame("Saved match", new ChessGame());
+        data.updateGame(new GameData(id, "Alice", "Bob", "Saved match", new ChessGame()));
+        var result = new GameplayService(data).makeMove(command(id, "white-token", 2, 4), "Alice");
+        var restarted = new SqlDataAccess();
+        assertEquals(result.game(), restarted.getGame(id));
+        assertEquals(ChessGame.TeamColor.BLACK, restarted.getGame(id).game().getTeamTurn());
+        var service = new GameplayService(restarted);
+        assertThrows(GameplayException.class, () -> service.makeMove(command(id, "white-token", 2, 3), "Alice"));
+        assertEquals(result.game(), restarted.getGame(id));
+        service.makeMove(command(id, "black-token", 7, 5), "Bob");
+        var saved = new SqlDataAccess().getGame(id);
+        assertEquals(ChessGame.TeamColor.WHITE, saved.game().getTeamTurn());
+        assertNotNull(saved.game().getBoard().getPiece(new ChessPosition(4, 5)));
+        assertNotNull(saved.game().getBoard().getPiece(new ChessPosition(5, 5)));
+        assertEquals("Alice", saved.whiteUsername());
+        assertEquals("Bob", saved.blackUsername());
+    }
+
+    private MakeMoveCommand command(int id, String token, int fromRow, int toRow) {
+        return new MakeMoveCommand(token, id, new ChessMove(new ChessPosition(fromRow, 5), new ChessPosition(toRow, 5), null));
     }
 }

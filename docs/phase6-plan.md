@@ -1,9 +1,8 @@
 # Phase 6: live gameplay plan
 
-Planning baseline: November 17, 2026, `main` at `4396ff4`. This is a proposed
-implementation plan; live gameplay is not implemented yet. Milestones 1–4 are
-implemented: protocol, durable snapshots, the validated WebSocket endpoint, and
-player/observer connections that load saved games.
+Planning baseline: November 17, 2026, `main` at `4396ff4`. Milestones 1–5 are implemented: protocol, durable snapshots, the validated
+WebSocket endpoint, player/observer connections, and validated saved moves.
+The remaining milestones are planned.
 
 ## Sources and starting point
 
@@ -34,7 +33,7 @@ game rules into `ConsoleClient` or `Server`.
   error/notification classes are in `shared/src/main/java/websocket`. The supplied
   base classes are unchanged. `ProtocolSerializationTests` checks the wire fields,
   payload separation, promotion choices, and JSON round trips.
-- **Server (CONNECT implemented):** `/ws` is registered with Javalin.
+- **Server (CONNECT and MAKE_MOVE implemented):** `/ws` is registered with Javalin.
   `GameplayHandler` validates commands through `GameCommandReader`, and
   `GameplayService` authenticates each command against current storage.
   `GameConnections` binds each socket to one username/game and queues ordered
@@ -42,7 +41,10 @@ game rules into `ConsoleClient` or `Server`.
   announces the stored player color or observer role to other game subscribers.
   Repeated CONNECT refreshes state without another announcement. Disconnect
   removes subscriptions while retaining seats; reconnect does not require HTTP
-  rejoin. Other gameplay commands remain unimplemented.
+  rejoin. MAKE_MOVE validates the subscribed player, ownership, turn, legal move,
+  and saved end state under the HTTP join storage lock. A successful save sends
+  LOAD_GAME to all game subscribers and a named move notice to everyone except
+  the requester. LEAVE, RESIGN, and automatic terminal notifications remain planned.
 - **Persistence (implemented foundation):** `ChessGame.endGame()` records a
   `gameOver` flag in the existing JSON; `isGameOver()` reads it and `makeMove()`
   rejects further moves once set. Old JSON defaults to false. `ChessGame.copy()`
@@ -66,7 +68,7 @@ game rules into `ConsoleClient` or `Server`.
   existing 1-based `ChessPosition` rows/columns. Promotion accepts queen, rook,
   bishop, or knight. Reuse `DisplayText` when rendering remote text.
 
-### Wire contract (CONNECT implemented; other actions planned)
+### Wire contract (CONNECT and basic MAKE_MOVE implemented; remaining actions planned)
 
 Every command carries `commandType`, `authToken`, and integer `gameID`.
 `MAKE_MOVE` also carries `ChessMove move`. Authenticate each command against
@@ -117,7 +119,7 @@ dates are work targets, not automatically scheduled sessions.
 | --- | --- |
 | 1 / Nov 17 | 1–2: protocol and durable game state |
 | 2 / Nov 18 | 3–4: WebSocket endpoint and connecting |
-| 3 / Nov 21 | 5–6: moves and terminal-state notifications |
+| 3 / Nov 19 | 5–6: moves and terminal-state notifications |
 | 4 / Nov 23 | 7–8: leaving and resignation |
 | 5 / Nov 28 | 9–10: official integration tests and client transport |
 | 6 / Nov 30 | 11–12: live board and move/promotion input |
@@ -132,7 +134,7 @@ Fourteen is the planned milestone count; necessary follow-up fixes may add commi
 | 2 | **Complete Nov 17:** durable game-over state, detached copies, and 15 lifecycle/isolation tests; full suite 737 passing. |
 | 3 | **Complete Nov 18:** `/ws`, strict parsing, current-token authorization, connection tracking, ordered asynchronous replies, and 27 network tests. |
 | 4 | **Complete Nov 18:** CONNECT, saved-state loading, player/observer roles, game isolation, identity binding, and reconnects; 13 additional network tests. |
-| 5 | Implement MAKE_MOVE; test legal moves, wrong turn/piece, observer denial, and failed persistence. |
+| 5 | **Complete Nov 19:** MAKE_MOVE, strict move parsing, ownership/turn/legal-move validation, persistence, scoped ordered broadcasts, failed-save recovery, and competing-move protection. |
 | 6 | Implement terminal-state and check notifications; test checkmate/stalemate and rejected later moves. |
 | 7 | Implement LEAVE; test seat release, observer departure, and replacement players. |
 | 8 | Implement RESIGN; test player-only authorization, retained subscriptions, restart durability, and repeated resignation. |
@@ -169,4 +171,4 @@ The current course links named "checklist" and "common problems" point to
 anchors absent from the current tips file. Use the gameplay rubric and the
 available Phase 6 checklist, and recheck those links before pass-off.
 
-**Next concrete step:** milestones 5–6: validated moves, persistence, and check/terminal-state notifications. A TA appointment has not been scheduled.
+**Next concrete step:** milestone 6: check/terminal-state notifications and durable game completion. A TA appointment has not been scheduled.

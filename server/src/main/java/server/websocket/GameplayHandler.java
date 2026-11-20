@@ -6,6 +6,7 @@ import io.javalin.websocket.WsMessageContext;
 import service.GameplayException;
 import service.GameplayService;
 import websocket.commands.UserGameCommand;
+import websocket.commands.MakeMoveCommand;
 import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationMessage;
@@ -32,13 +33,25 @@ public final class GameplayHandler {
                 connect(context.sessionId(), access);
             } else {
                 connections.requireSubscription(context.sessionId(), access.username(), command.getGameID());
-                connections.send(context.sessionId(), new ErrorMessage("This gameplay action is not implemented yet"));
+                if (command instanceof MakeMoveCommand move) {
+                    makeMove(context.sessionId(), access.username(), move);
+                } else {
+                    connections.send(context.sessionId(), new ErrorMessage("This gameplay action is not implemented yet"));
+                }
             }
         } catch (GameplayException exception) {
             connections.send(context.sessionId(), new ErrorMessage(exception.getMessage()));
         } catch (DataAccessException | RuntimeException exception) {
             connections.send(context.sessionId(), new ErrorMessage("Unable to process game command"));
         }
+    }
+
+    private void makeMove(String id, String username, MakeMoveCommand command)
+            throws GameplayException, DataAccessException {
+        var result = service.makeMove(command, username);
+        int gameID = result.game().gameID();
+        connections.broadcast(gameID, null, new LoadGameMessage(result.game().game()));
+        connections.broadcast(gameID, id, new NotificationMessage(result.moveNotice()));
     }
 
     private void connect(String id, GameplayService.GameAccess access) throws GameplayException {

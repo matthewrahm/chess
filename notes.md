@@ -1869,3 +1869,28 @@ implementation commits are complete across Nov 17–18. Next: milestones 5–6,
 validated moves with persistence and check/checkmate/stalemate notifications.
 The plan is updated in docs/phase6-plan.md. Phase 6 submission and TA pass-off
 remain future work; no readiness or remote grading claim is made.
+
+
+## November 19 - Phase 6 milestone 5: validated live moves
+
+Implemented MAKE_MOVE using the shared typed command. Strict parsing rejects
+missing/coerced/out-of-range positions and invalid promotion types. The subscribed
+identity must own the moving piece; ChessGame enforces turn and legal moves.
+GameplayService reauthenticates and fetches the current saved game while holding
+the same store monitor as HTTP joins, then saves the detached result. After a
+successful save, all subscribers receive LOAD_GAME and other subscribers receive
+a username/piece/algebraic-coordinate move notice. Invalid requests and failed
+writes return ERROR only to the sender, without board changes or storage details.
+
+Java 21 focused run: 65 tests pass, including 20 parser cases, four network move
+scenarios, a two-service concurrent move race, and the previous 40 socket cases.
+Official whole-project Checkstyle under Java 26 and git diff --check pass. The
+initial quality run found a test-package file-count limit; the SQL service case
+was consolidated into SqlGameLifecycleTests. Full disposable-SQL regression is
+running; its result will be recorded with milestone 6. Evidence: logs prefixed
+/tmp/chess-phase6-nov19-moves. No supplied tests were changed.
+
+Handoff: main; milestone 5 of 14. Today's requested session moves planned workday
+3 from Nov 21 to Nov 19. Next: classify check/checkmate/stalemate before saving,
+persist terminal state, broadcast status to everyone, and test rejection after
+completion. LEAVE/RESIGN and client gameplay remain future milestones.

@@ -29,13 +29,17 @@ abstract class GameSocketFixture {
 
     @BeforeEach
     void startServer() throws Exception {
-        data = new MemoryDataAccess();
+        data = createDataAccess();
         data.createAuth(new AuthData("white-token", "Alice"));
         data.createAuth(new AuthData("black-token", "Bob"));
         data.createAuth(new AuthData("observer-token", "Charlie"));
         gameID = data.createGame("Practice", new ChessGame());
         server = new Server(data);
         port = server.run(0);
+    }
+
+    protected MemoryDataAccess createDataAccess() {
+        return new MemoryDataAccess();
     }
 
     @AfterEach
