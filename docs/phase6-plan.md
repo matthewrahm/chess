@@ -1,10 +1,11 @@
 # Phase 6: live gameplay plan
 
 Planning baseline: November 17, 2026, `main` at `4396ff4`.
-Milestones 1–9 are implemented: protocol, durable snapshots, the validated
+Milestones 1–10 are implemented: protocol, durable snapshots, the validated
 WebSocket endpoint, player/observer connections, validated saved moves, and
 check/checkmate/stalemate notifications with durable game completion, leaving,
-and resignation. Official WebSocket pass-offs are active.
+and resignation. Official WebSocket pass-offs and the client connection/session
+foundation are implemented. Console integration remains for milestones 11–14.
 The remaining milestones are planned.
 
 ## Sources and starting point
@@ -67,11 +68,14 @@ game rules into `ConsoleClient` or `Server`.
   cannot mutate memory storage. Prepare immutable event snapshots only after
   persistence succeeds and enqueue them in commit order. Serialize socket writes;
   never perform blocking network sends while holding the storage monitor.
-- **Client transport:** a dedicated communicator owns connection lifecycle and
-  JSON. An observer callback delivers typed messages to a gameplay session that
-  holds game ID, role, perspective, and the latest server state. Guard state and
-  console output against asynchronous callbacks; stale callbacks from a previous
-  connection must not redraw a later session.
+- **Client transport/session (implemented):** `client.gameplay.WebSocketCommunicator`
+  implements `GameplayTransport`, owns a JDK HTTP/WebSocket connection to `/ws`,
+  bounds connection/write waits, serializes writes, assembles fragmented text,
+  and decodes typed messages. Invalid/oversized/binary messages close the connection
+  with a safe error. Closing transport retains player seats; it never sends LEAVE.
+  `GameplaySession` owns game ID, role, perspective, and detached state snapshots.
+  Each connection attempt has a generation; obsolete messages/errors/close events
+  cannot update a reconnected or closed session. Console integration is still pending.
 - **Console:** continue using the existing renderer, with optional selected-square
   and legal-destination highlights. Translate algebraic coordinates into the
   existing 1-based `ChessPosition` rows/columns. Promotion accepts queen, rook,
@@ -148,7 +152,7 @@ Fourteen is the planned milestone count; necessary follow-up fixes may add commi
 | 7 | **Complete Nov 20:** LEAVE, player seat release, observer unsubscribe, replacement players, failed-save retry, authorization, ended-game preservation, and SQL/server restart persistence. |
 | 8 | **Complete Nov 20:** RESIGN, player-only authorization on either turn, retained seats/subscriptions, scoped notification counts, failed-save retry, repeat/move rejection, SQL/server restart durability, and competing resignations. |
 | 9 | **Complete Nov 24:** activate unchanged official WebSocket tests/helpers; all 18 pass in the full suite and the standalone public grader runner against disposable storage. |
-| 10 | Add client communicator/session; test lifecycle, typed callbacks, close/error handling, and stale events. |
+| 10 | **Complete Nov 24:** client communicator and session with typed messages, bounded transport operations, detached snapshots, reconnects, close/error handling, and stale-event protection. |
 | 11 | Connect play/observe to the live board; verify both perspectives, current-state reconnect, and two players plus observer. |
 | 12 | Add move input and promotion selection; test invalid input and updates arriving during prompts. |
 | 13 | Add local highlighting, redraw, help, confirmed resign, and leave; test observer/opponent-piece highlighting and cleanup. |
@@ -180,7 +184,7 @@ The current course links named "checklist" and "common problems" point to
 anchors absent from the current tips file. Use the gameplay rubric and the
 available Phase 6 checklist, and recheck those links before pass-off.
 
-**Next concrete step:** milestone 10: add client transport/session handling. A TA appointment has not been scheduled.
+**Next concrete step:** milestones 11–12: wire play/observe to the live session and board, then add move and promotion input. A TA appointment has not been scheduled.
 
 ## November 20 verification
 
@@ -233,3 +237,44 @@ regression checks. This is local verification, not a remote grading submission.
 Reports: `/tmp/chess-phase6/nov24-official`,
 `/tmp/chess-phase6/nov24-official-grader`, and
 `/tmp/chess-phase6/nov24-official-quality.log`.
+
+### Client interface for the next milestone
+
+- `new GameplaySession(port, gameID, authToken, role, listener)` establishes the
+  session identity; `connect()` opens the socket and sends CONNECT. It returns
+  after writing, not after server authorization: only a LOAD_GAME callback moves
+  the snapshot from CONNECTING to ACTIVE. Players must HTTP-join first; observers
+  connect directly. Connection/write failures throw `ServerException` and also
+  notify the listener when the connection becomes unavailable.
+- `Listener.onMessage(Snapshot, ServerMessage)` receives the shared typed
+  `LoadGameMessage`, `ErrorMessage`, or `NotificationMessage`.
+  `onDisconnect(Snapshot, String)` reports connection loss; a disconnected session
+  retains its last board and can reconnect without another HTTP join.
+  Initial server rejection closes the connection; errors after activation retain
+  the session. All callbacks are serialized with session changes. Handlers should
+  update state/output promptly and avoid blocking network work inside callbacks.
+- `snapshot()` returns game ID, role, perspective, status, and a defensive game
+  copy. `close()` permanently invalidates the session and suppresses late
+  callbacks without releasing a seat. Close an old session before replacing it.
+  Apply `DisplayText.singleLine` to remote text when connecting console output.
+- `GameplayTransport.send(UserGameCommand)` supports all four shared wire commands.
+  Session-level move/leave/resign APIs and user prompts remain for milestones
+  12–13. Preserve server acknowledgement behavior: LEAVE has no success reply;
+  RESIGN sends a notification, not LOAD_GAME. Do not infer a server-confirmed
+  transition merely because a socket write succeeded.
+
+Milestone 10 adds 28 client cases covering typed decoding, malformed payloads,
+all four command wire formats, fragmented/oversized/binary messages, server
+closure, connection refusal, lifecycle failures, close-during-connect, stale
+callbacks, detached snapshots, and real server player/observer updates and
+seat-preserving reconnects. The final disposable-database `--phase 6` build
+passes 874 tests, including all 18 official WebSocket cases, with no failures,
+errors, or skips. SQL coverage is 166/171 (97.08%); ServerFacade is 90/90 (100%).
+Course Checkstyle passes across all production modules. Reports:
+`/tmp/chess-phase6/nov24-client` and
+`/tmp/chess-phase6/nov24-client-quality.log`.
+Both full builds and the standalone runner removed their temporary database and
+account. Development data was untouched. The two Nov 24 commits complete
+milestones 9–10, bringing Phase 6 to 10 of 14 planned commits across five days
+on `main`. Console gameplay, packaged multi-client rehearsal, remote grading,
+and the TA demonstration remain outstanding.
