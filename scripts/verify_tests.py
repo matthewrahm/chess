@@ -24,7 +24,7 @@ def arguments():
     parser.add_argument("--output", type=Path, required=True, help="New directory for logs and reports")
     parser.add_argument("--grader-libs", type=Path, help="Run the public grader's JUnit/JaCoCo tools for the selected phase")
     parser.add_argument("--grader-java", default="java")
-    parser.add_argument("--phase", choices=("4", "5"), default="4", help="Grader test/coverage scope (default: 4)")
+    parser.add_argument("--phase", choices=("4", "5", "6"), default="4", help="Grader test/coverage scope (default: 4)")
     return parser.parse_args()
 
 
@@ -88,6 +88,9 @@ def run_grader_tools(checkout, args):
     libs = args.grader_libs.resolve()
     module = "client" if args.phase == "5" else "server"
     package = "client" if args.phase == "5" else "dataaccess"
+    # The grader compiles only Phase 6 passoffs. This checkout also contains older
+    # passoffs in the same package, so select the current class explicitly.
+    selection = (["-c", "passoff.server.WebSocketTests"] if args.phase == "6" else ["-p", package])
     jar = checkout / f"{module}/target/{module}-test-dependencies.jar"
     classes = checkout / f"{module}/target/test-classes"
     with (args.output / "junit.log").open("w") as log:
@@ -95,9 +98,12 @@ def run_grader_tools(checkout, args):
             args.grader_java, f"-javaagent:{libs / 'jacocoagent.jar'}", "-jar",
             str(libs / "junit-platform-console-standalone-1.10.1.jar"), "execute",
             "--class-path", f"{classes}:{jar}:{libs / 'junit-jupiter-api-5.10.1.jar'}",
-            "--details=summary", "--reports-dir=test-output", "--fail-if-no-tests", "-p", package,
+            "--details=summary", "--reports-dir=test-output", "--fail-if-no-tests", *selection,
         ], cwd=checkout, stdout=log, stderr=subprocess.STDOUT)
     shutil.copytree(checkout / "test-output", args.output / "grader-tests")
+    if args.phase == "6":
+        print(f"Public grader tools exit: {result.returncode}; Phase 6 WebSocket passoffs only (no coverage rubric).")
+        return result.returncode
     subprocess.run([
         args.grader_java, "-jar", str(libs / "jacococli.jar"), "report", "jacoco.exec",
         "--classfiles", str(checkout / f"{module}/target/classes"),
@@ -107,6 +113,18 @@ def run_grader_tools(checkout, args):
     coverage_result = check_coverage(args.output / "grader-coverage.xml", args.phase)
     print(f"Public grader tools exit: {result.returncode}; {package} tests only.")
     return result.returncode or coverage_result
+
+
+def check_gameplay_report(checkout):
+    report = checkout / "server/target/surefire-reports/TEST-passoff.server.WebSocketTests.xml"
+    if not report.is_file():
+        print("FAIL: official Phase 6 WebSocket tests were not discovered.")
+        return 1
+    suite = ET.parse(report).getroot()
+    total = int(suite.get("tests", "0"))
+    unsuccessful = sum(int(suite.get(field, "0")) for field in ("failures", "errors", "skipped"))
+    print(f"Official Phase 6 WebSocket tests: {total - unsuccessful}/{total} passed.")
+    return 0 if total > 0 and unsuccessful == 0 else 1
 
 
 def main():
@@ -155,8 +173,10 @@ def main():
             coverage_result = 0
             if client_coverage.exists():
                 shutil.copytree(client_coverage, args.output / "client-jacoco")
-            if args.phase == "5":
-                coverage_result = check_coverage(client_coverage / "jacoco.xml", args.phase)
+            if args.phase in ("5", "6"):
+                coverage_result = check_coverage(client_coverage / "jacoco.xml", "5")
+            if args.phase == "6":
+                coverage_result |= check_gameplay_report(checkout)
             print(f"Maven exit: {result.returncode}; reports: {args.output}")
             return result.returncode or coverage_result
     finally:

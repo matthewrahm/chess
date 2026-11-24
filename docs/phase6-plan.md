@@ -1,10 +1,10 @@
 # Phase 6: live gameplay plan
 
 Planning baseline: November 17, 2026, `main` at `4396ff4`.
-Milestones 1–8 are implemented: protocol, durable snapshots, the validated
+Milestones 1–9 are implemented: protocol, durable snapshots, the validated
 WebSocket endpoint, player/observer connections, validated saved moves, and
 check/checkmate/stalemate notifications with durable game completion, leaving,
-and resignation.
+and resignation. Official WebSocket pass-offs are active.
 The remaining milestones are planned.
 
 ## Sources and starting point
@@ -130,7 +130,7 @@ dates are work targets, not automatically scheduled sessions.
 | 2 / Nov 18 | 3–4: WebSocket endpoint and connecting |
 | 3 / Nov 19 | 5–6: moves and terminal-state notifications |
 | 4 / Nov 20 | 7–8: leaving and resignation |
-| 5 / Nov 28 | 9–10: official integration tests and client transport |
+| 5 / Nov 24 | 9–10: official integration tests and client transport |
 | 6 / Nov 30 | 11–12: live board and move/promotion input |
 | 7 / Dec 1 | 13–14: gameplay commands and final verification |
 
@@ -147,7 +147,7 @@ Fourteen is the planned milestone count; necessary follow-up fixes may add commi
 | 6 | **Complete Nov 19:** check/checkmate/stalemate notifications, durable completion, reconnect/reload rejection, all four promotions, and failed terminal-save isolation. |
 | 7 | **Complete Nov 20:** LEAVE, player seat release, observer unsubscribe, replacement players, failed-save retry, authorization, ended-game preservation, and SQL/server restart persistence. |
 | 8 | **Complete Nov 20:** RESIGN, player-only authorization on either turn, retained seats/subscriptions, scoped notification counts, failed-save retry, repeat/move rejection, SQL/server restart durability, and competing resignations. |
-| 9 | Activate unchanged official WebSocket tests/helpers; run the server suite in a disposable database and fix integration defects. |
+| 9 | **Complete Nov 24:** activate unchanged official WebSocket tests/helpers; all 18 pass in the full suite and the standalone public grader runner against disposable storage. |
 | 10 | Add client communicator/session; test lifecycle, typed callbacks, close/error handling, and stale events. |
 | 11 | Connect play/observe to the live board; verify both perspectives, current-state reconnect, and two players plus observer. |
 | 12 | Add move input and promotion selection; test invalid input and updates arriving during prompts. |
@@ -180,7 +180,7 @@ The current course links named "checklist" and "common problems" point to
 anchors absent from the current tips file. Use the gameplay rubric and the
 available Phase 6 checklist, and recheck those links before pass-off.
 
-**Next concrete step:** milestones 9–10: activate unchanged official WebSocket integration tests, then add client transport/session handling. A TA appointment has not been scheduled.
+**Next concrete step:** milestone 10: add client transport/session handling. A TA appointment has not been scheduled.
 
 ## November 20 verification
 
@@ -209,3 +209,27 @@ temporary database/accounts and left the development database unchanged.
 Today's completed milestones bring the Phase 6 history to 8 of 14 planned commits
 across four workdays. Client gameplay, official Phase 6 integration, remote grading,
 and the TA demonstration remain for later milestones.
+
+## November 24 verification
+
+Milestone 9 activates the official `passoff.server.WebSocketTests` and
+`TestFactory` unchanged. All four starter Java files match current starter
+revision `d3ffc6639e2d78d0e88b3fe899936b995d8614e1`; both activated files also
+match current public grader revision `ef1910bf7960de637c6f65373f21c29af4ebf35b`.
+No server fixes were needed. The full disposable-database build passes 846 tests,
+including all 18 official WebSocket cases, with no failures, errors, or skips.
+SQL coverage remains 166/171 (97.08%); ServerFacade remains 90/90 (100%).
+Course Checkstyle passes across all production modules.
+
+`scripts/verify_tests.py --phase 6 --output <new-directory>` now requires the
+WebSocket report and rejects missing/skipped/failed tests, retaining both existing
+coverage gates. Missing, successful, and skipped-report paths were checked.
+With `--grader-libs` and `--grader-java`, it runs the public JUnit runner selecting
+`passoff.server.WebSocketTests`: the public grader compiles only current-phase
+pass-offs, whereas this checkout retains earlier tests in the same package.
+That independent runner also passes all 18 cases. Phase 6 has no separate unit
+coverage rubric in the inspected public grader; retained coverage gates are
+regression checks. This is local verification, not a remote grading submission.
+Reports: `/tmp/chess-phase6/nov24-official`,
+`/tmp/chess-phase6/nov24-official-grader`, and
+`/tmp/chess-phase6/nov24-official-quality.log`.
